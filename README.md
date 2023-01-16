@@ -1,10 +1,10 @@
 # Crawler for Foodpanda
 Create for research project in Research Center for Humanities and Social Sciences. We use elementary school in Taiwan as our central location (about 354) and scrapy food menu from the restaurant located near by the school.
 
-## folder structure
+## file 
 ````
 [
-  '|-- foodpanda_crawler',
+  '|-- uber爬蟲',
   '    |-- README.md',
   '    |-- foodpanda.py',
   '    |-- requirements.txt',
@@ -24,7 +24,6 @@ Create for research project in Research Center for Humanities and Social Science
 
 ## 1.Set up environment
 We recommend to creat an environment for our crawler. Creat a environment name `spider`, and assign python version as 3.8
-key in the fellowing command in command line:
 ````
 conda create --name spider python=3.8
 ````
