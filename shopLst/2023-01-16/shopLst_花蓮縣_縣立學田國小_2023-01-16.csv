@@ -1,0 +1,2 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,肯德基KFC（無早餐）校稿用,d8rb,1,"['甜點', '漢堡', '歐美', '炸雞']",False,20.0,50.0,20.0,10.0,4.114741676798937,0

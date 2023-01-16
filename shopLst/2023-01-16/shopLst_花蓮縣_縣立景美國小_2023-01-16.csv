@@ -1,0 +1,4 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,弘爺漢堡 (青年住宅店),nqde,2,"['早餐', '台式']",False,19.0,79.0,40.0,15.0,5.2235385394489455,131
+1,康樂小吃店,n1pa,2,"['麵食', '台式']",False,19.0,79.0,40.0,15.0,3.307953622586545,886
+2,康樂小吃店,n1pa,2,"['麵食', '台式']",False,19.0,79.0,40.0,15.0,3.307953622586545,886

@@ -1,0 +1,4 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,mumu咖啡,t2of,2,"['甜點', '咖啡', '蛋糕']",False,9.0,79.0,40.0,15.0,2.9502647368490584,301
+1,先自然 (大舜概念門市),i3d5,2,['飲料'],False,9.0,79.0,40.0,15.0,3.166264516283027,169
+2,先自然 (大舜概念門市),i3d5,2,['飲料'],False,9.0,79.0,40.0,15.0,3.166264516283027,169

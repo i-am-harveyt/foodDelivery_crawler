@@ -1,0 +1,2 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,初。堡了沒,cu06,1,"['漢堡', '麵食', '台式', '三明治 / 吐司']",False,19.0,79.0,40.0,15.0,5.013975525007321,24

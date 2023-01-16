@@ -1,0 +1,4 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,麥當勞 (S339 北港華勝店),o2vt,2,"['漢堡', '歐美']",False,19.0,79.0,40.0,15.0,5.390852248942499,4282
+1,肯德基KFC炸雞漢堡店 (雲林北港店),mquu,2,"['甜點', '漢堡', '歐美', '炸雞']",False,19.0,79.0,40.0,15.0,5.419874059625712,331
+2,肯德基KFC炸雞漢堡店 (雲林北港店),mquu,2,"['甜點', '漢堡', '歐美', '炸雞']",False,19.0,79.0,40.0,15.0,5.419874059625712,331

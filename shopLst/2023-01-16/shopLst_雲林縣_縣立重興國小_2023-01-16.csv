@@ -1,0 +1,2 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,達美樂 (溪湖員鹿店),n1xx,3,"['披薩', '歐美']",False,30.0,199.0,40.0,25.0,5.059258327640035,643

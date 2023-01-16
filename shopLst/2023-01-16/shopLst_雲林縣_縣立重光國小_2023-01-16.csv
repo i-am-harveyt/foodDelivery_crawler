@@ -1,0 +1,2 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,達美樂 (北斗文苑店),r1in,3,"['披薩', '歐美']",False,30.0,199.0,45.0,25.0,6.790540038889741,562

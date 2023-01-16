@@ -1,0 +1,2 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,達美樂 (麻豆興南店),miym,3,"['披薩', '歐美']",False,30.0,199.0,25.0,15.0,6.4089550992147,29

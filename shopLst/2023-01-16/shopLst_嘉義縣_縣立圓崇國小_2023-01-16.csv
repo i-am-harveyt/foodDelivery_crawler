@@ -1,0 +1,4 @@
+,shopName,shopCode,budget,category,pandaOnly,minFee,minOrder,minDelTime,minPickTime,distance,rateNum
+0,竹山橋頭麵海山麵館 (南投秀傳店),fc4j,2,"['湯品', '麵食', '台式']",False,9.0,79.0,40.0,15.0,1.2300913292217472,21
+1,古早味菜脯雞,q0og,3,"['湯品', '台式']",False,9.0,79.0,40.0,15.0,4.012930193127052,30
+2,古早味菜脯雞,q0og,3,"['湯品', '台式']",False,9.0,79.0,40.0,15.0,4.012930193127052,30
