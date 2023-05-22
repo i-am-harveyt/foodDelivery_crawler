@@ -1,3 +1,5 @@
+import os
+# os.system('pip install -r requirements.txt')
 import re
 import requests
 import pandas as pd
@@ -7,11 +9,26 @@ import concurrent.futures
 import time
 from random import randint
 import pickle
-import os
 from tqdm import tqdm
 import random
 import bs4
 import numpy as np
+import argparse
+from dropbox.exceptions import AuthError
+import pathlib
+import shutil
+
+"""pass argument"""
+def parse_args():
+    parser = argparse.ArgumentParser(description="Finetune a transformers model on a summarization task")
+    # ------------------------>
+    parser.add_argument("--center_type", type=str, default='most',)
+    parser.add_argument("--debug", type=bool, default=False)
+    parser.add_argument("--workerNumShop", type=int, default=10)
+    parser.add_argument("--workerNumMeau", type=int, default=5)
+    parser.add_argument("--doSleep", type=bool, default=True)
+    args, unknown = parser.parse_known_args()
+    return args
 
 """input columns:
 lat: 中心點latitude, 必要變數
@@ -24,7 +41,7 @@ output: dataframe
 def getNearShop(lat, lng, city, loc):
 
     url = 'https://disco.deliveryhero.io/listing/api/v1/pandora/vendors'
-
+    currentTime = datetime.now()
     result = {}
     result['shopName'] = []
     result['shopCode'] = []
@@ -59,6 +76,10 @@ def getNearShop(lat, lng, city, loc):
     headers = {
         'x-disco-client-id': 'web',
     }
+    # need sleep to prevent error 429
+    if args.doSleep:
+        if bool(random.choices([1, 0], [1, 9])): # 90% not sleep, 10% sleep
+            time.sleep(random.uniform(0.5, 1.5)) # randomly sleep 0.5~1.5s, the minium requirement
     r = requests.get(url=url, params=query, headers=headers)
 
     if r.status_code == requests.codes.ok:
@@ -66,13 +87,14 @@ def getNearShop(lat, lng, city, loc):
         datalen = data['data']['available_count']
         restaurants = data['data']['items']
         for restaurant in restaurants:
+            
             result['shopName'].append(restaurant['name'])
             result['shopCode'].append(restaurant['code'])
             result['budget'].append(restaurant['budget'])
             result['distance'].append(restaurant['distance'])
             result['pandaOnly'].append(restaurant['is_best_in_city'])
             result['rateNum'].append(restaurant['review_number'])
-            
+            result['updateDate'] = currentTime
             tmp = []
             for cat in restaurant['cuisines']:
                 tmp.append(cat['name'])
@@ -166,13 +188,9 @@ def getNearShop(lat, lng, city, loc):
     else:
         os.makedirs(f'./shopLst/{TODAY}')
     df.to_csv(f'./shopLst/{TODAY}/shopLst_{city}_{loc}_{TODAY}.csv')
-    print(f'write ./shopLst/{TODAY}/shopLst_{city}_{loc}_{TODAY}.csv', 'shopNum:', len(df))
 
 """
-concat shopLst_{city}_{loc}_{TODAY}.csv
-to
-./shopLst/{TODAY}/all_most_{TODAY}.csv 
-"""
+concat shopLst_{city}_{loc}_{TODAY}.csv to ./shopLst/{TODAY}/all_most_{TODAY}.csv """
 def concatDF():
     joinedlist = []
     # 資料夾路徑
@@ -188,174 +206,44 @@ def concatDF():
     df = df.dropna()
     df = df.drop_duplicates(subset=['shopCode'])
     df.to_csv(f'./shopLst/{TODAY}/all_most_{TODAY}.csv')
+    df.to_csv(f'./shopLst/all_most_{TODAY}.csv')
     print(f'write ./shopLst/{TODAY}/all_most_{TODAY}.csv')
 
     return df
 
-"""
-get menu from restaurant_code
-"""
-def getMenu(restaurant_code):
-    
-    currentTime = datetime.now()
-    result = {}
-    url = f'https://tw.fd-api.com/api/v5/vendors/{restaurant_code}'
-    query = {
-        'include': 'menus',
-        'language_id': '6',
-        'dynamic_pricing': '0',
-        'opening_type': 'delivery',
-    }
-    # can add more detail information in the header, to let the crawler like real user
-    headers = {
-        'Connection':'close',
-    }
-    try:
-        # need sleep to prevent error 429
-        if bool(random.choices([1, 0], [1, 9])): # 90% not sleep, 10% sleep
-            time.sleep(random.uniform(0.5, 1.5)) # randomly sleep 0.5~1.5s, the minium requirement
-            data = requests.get(
-                url=url,
-                params=query,
-                headers=headers, 
-                )
-        if (data.status_code == 429):
-            print('$429$, sleep')
-            time.sleep(random.uniform(30, 60))
-            data = requests.get(
-            url=url,
-            params=query,
-            headers=headers,
-            )
-    except:
-        print("connect refused?")
-        search = bs4.BeautifulSoup(data.text, "lxml")
-        # get the error message if website refused to connect
-        print(search.text)
-        # randomly sleep 5~10s, if website refused to connect
-        print("sleep ZZZzzz...ZZz..")
-        time.sleep(random.uniform(5, 10))
-        data = requests.get(
-            url=url,
-            params=query,
-            headers=headers,
-            )
-        
-    if data.status_code == requests.codes.ok:
-        data = data.json()
-        result['shopCode'] = restaurant_code
-        result['Url'] = url
-        result['address'] = data['data']['address']
-        result['location'] = [data['data']['latitude'], data['data']['longitude']]
-        result['rate'] = data['data']['rating']
-        result['updateDate'] = currentTime
-        tmp = []
-        if data['data']['is_pickup_enabled']==True:
-            result['pickup'] = 1
-        else:
-            result['pickup'] = 0
-        tmpInshop = 0
-        for i in range(len(data['data']['food_characteristics'])):
-            if '店內價' in data['data']['food_characteristics'][i]['name']:
-                tmpInshop = 1
-            else:
-                try:
-                    tmp.append(data['data']['food_characteristics'][i]['name'])
-                except:
-                    pass
-        if tmpInshop==1:
-            result['inShopPrice'] = 1
-        else:
-            result['inShopPrice'] = 0
-
-        result['shopTag'] = tmp
-
-        tmp = []
-        for i in range(len(data['data']['discounts'])):
-            tmp.append(data['data']['discounts'][i]['name'])
-        result['discount'] = tmp
-        tmp = {}
-        tmp['product'] = []
-        tmp['preDiscountPrice'] = []
-        tmp['discountedPrice'] = []
-        try:
-            for i in range(len(data['data']['menus'][0]['menu_categories'])):
-                for k in range(len(data['data']['menus'][0]['menu_categories'][i]['products'])):
-                    tmp['product'].append(data['data']['menus'][0]['menu_categories'][i]['products'][k]['name'])
-                    try:
-                        tmp['preDiscountPrice'].append(data['data']['menus'][0]['menu_categories'][i]['products'][k]['product_variations'][0]['price_before_discount'])
-                    except:
-                        tmp['preDiscountPrice'].append('')
-                    tmp['discountedPrice'].append(data['data']['menus'][0]['menu_categories'][i]['products'][k]['product_variations'][0]['price'])
-        except:
-            tmp['product'].append('')
-            tmp['preDiscountPrice'].append('')
-            tmp['discountedPrice'].append('')
-        
-        result['menu'] = tmp
-    else:
-        try:
-            data = data.json()
-            result['shopCode'] = restaurant_code
-            result['Url'] = url
-            result['error'] = data['data']['error']
-            result['updateDate'] = currentTime
-            result['menu'] = ""
-            result['address'] = ""
-            result['location'] = ""
-            result['rate'] = np.NaN
-            result['pickup'] = np.NaN
-        except:
-            pass
-    if len(result) == 0:
-      print('error code: ', data.status_code)
-    return result
 
 '''main'''
 '''execute time about 2 hours'''
 if __name__ == '__main__':
+
+    args = parse_args()
+    print()
     
-    # get current date
+    # # get current date
     TODAY = str(datetime.now().strftime("%Y-%m-%d"))
     print(TODAY)
 
     # read central location information
-    centerLst_most = pd.read_csv('./inputCentral/school_most.csv')
+    if args.debug:
+        centerLst_most = pd.read_csv(
+            './inputCentral/school.csv',
+            nrows=3,
+            )
+    else:
+        centerLst_most = pd.read_csv(
+            f'./inputCentral/school_{args.center_type}.csv',
+            )        
 
     # get shop data around center point
-    with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
-        ttlResult = list(executor.map(getNearShop,
-        centerLst_most['latitude'].to_list(),
-        centerLst_most['longitude'].to_list(),
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumShop) as executor:
+        ttlResult = list(tqdm(executor.map(getNearShop,
+        centerLst_most['newLat'].to_list(),
+        centerLst_most['newLng'].to_list(),
         centerLst_most['City'].to_list(),
         centerLst_most['School'].to_list(),
-        ))
-
+        )))
+    print('shop catch down')
     # concat all the restuarant list, output: 
     shopData = concatDF()
     print('number of resuarant in total: ', len(shopData))
 
-    # read the restuarant list file 
-    shopLst_most = pd.read_csv(f'./shopLst/{TODAY}/all_most_{TODAY}.csv')
-
-    """
-    get menu data
-    we recommend not to set max_workers more than 10, otherwise might be request too fast
-    and get 429 error
-    it take 1.5~2 hours to go through all the restuarant, about 50,000 resturant in Taiwan
-    """
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        ttlResult = list(tqdm(executor.map(getMenu, shopLst_most['shopCode'].to_list()),
-        total=len(shopLst_most['shopCode'].to_list())))
-
-    # conver result to data frame
-    df = pd.DataFrame(ttlResult)
-    print('number of shop did not catch data: ', df.isnull().sum())
-    df.to_csv(f'./meau_Foodpanda/foodpandaMenu_{TODAY}.csv')
-
-'''
-this code is originally creat by 吳昕晏, modify by Yu-Shin, Liou
-Modified the input output structure, fix the error caused by intense request.
-Also notice the duplicate data in shopLst_most.
-After drop the duplicted data, the number of shop will decrease from about 1,000,000 to 50,000
-'''
