@@ -22,11 +22,12 @@ import shutil
 def parse_args():
     parser = argparse.ArgumentParser(description="get shop list from specific location")
     # ------------------------>
-    parser.add_argument("--center_type", type=str, default='most',)
+    parser.add_argument("--centerFile", type=str, default='school.csv',)
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
     parser.add_argument("--workerNumMeau", type=int, default=5)
     parser.add_argument("--doSleep", type=bool, default=True)
+    parser.add_argument("--outputPath", type=str, default='../panda_data/shopLst/')
     args, unknown = parser.parse_known_args()
     return args
 
@@ -76,18 +77,20 @@ def getNearShop(lat, lng, city, loc):
     headers = {
         'x-disco-client-id': 'web',
     }
-    # need sleep to prevent error 429
+    # need sleep between request to prevent error 429
     if args.doSleep:
         if bool(random.choices([1, 0], [1, 9])): # 90% not sleep, 10% sleep
             time.sleep(random.uniform(0.5, 1.5)) # randomly sleep 0.5~1.5s, the minium requirement
+
     r = requests.get(url=url, params=query, headers=headers)
 
     if r.status_code == requests.codes.ok:
         data = r.json()
+        # get total number of restaurants = datalen
         datalen = data['data']['available_count']
         restaurants = data['data']['items']
+        # go through all the restaurants
         for restaurant in restaurants:
-            
             result['shopName'].append(restaurant['name'])
             result['shopCode'].append(restaurant['code'])
             result['budget'].append(restaurant['budget'])
@@ -115,7 +118,7 @@ def getNearShop(lat, lng, city, loc):
                 result['minPickTime'].append(restaurant['minimum_pickup_time'])
             except:
                 result['minPickTime'].append("")
-
+    # 
     for i in range(1, datalen, 100):
         query = {
             'longitude': lng,
@@ -183,31 +186,31 @@ def getNearShop(lat, lng, city, loc):
 
     # output path, change this if needed
     # creat date folder under shoplist if it is not exsist
-    if (os.path.exists(f'./shopLst/{TODAY}')):
+    if (os.path.exists(f'{args.outputPath}/{TODAY}')):
         pass
     else:
-        os.makedirs(f'./shopLst/{TODAY}')
-    df.to_csv(f'./shopLst/{TODAY}/shopLst_{city}_{loc}_{TODAY}.csv')
+        os.makedirs(f'{args.outputPath}/{TODAY}')
+    df.to_csv(f'{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.csv')
 
 """
-concat shopLst_{city}_{loc}_{TODAY}.csv to ./shopLst/{TODAY}/all_most_{TODAY}.csv """
+concat shopLst_{city}_{loc}_{TODAY}.csv to {args.outputPath}/{TODAY}/all_most_{TODAY}.csv """
 def concatDF():
     joinedlist = []
     # 資料夾路徑
-    dir_list = os.listdir(f'./shopLst/{TODAY}/')
+    dir_list = os.listdir(f'{args.outputPath}/{TODAY}/')
 
     # read all shopLst_{city}_{loc}_{TODAY}.csv
     for file in dir_list:
         if (file != '.DS_Store') and (TODAY in file) and ('shopLst_' in file):
-            tmp = pd.read_csv(f'./shopLst/{TODAY}/{file}')
+            tmp = pd.read_csv(f'{args.outputPath}/{TODAY}/{file}')
             joinedlist.append(tmp)
 
     df = pd.concat(joinedlist)
     df = df.dropna()
     df = df.drop_duplicates(subset=['shopCode'])
-    df.to_csv(f'./shopLst/{TODAY}/all_most_{TODAY}.csv')
-    df.to_csv(f'./shopLst/all_most_{TODAY}.csv')
-    print(f'write ./shopLst/{TODAY}/all_most_{TODAY}.csv')
+    df.to_csv(f'{args.outputPath}/{TODAY}/all_most_{TODAY}.csv')
+    df.to_csv(f'{args.outputPath}/all_most_{TODAY}.csv')
+    print(f'write {args.outputPath}/{TODAY}/all_most_{TODAY}.csv')
 
     return df
 
@@ -226,12 +229,12 @@ if __name__ == '__main__':
     # read central location information
     if args.debug:
         centerLst_most = pd.read_csv(
-            './inputCentral/school.csv',
+            f'./inputCentral/{args.centerFile}',
             nrows=3,
             )
     else:
         centerLst_most = pd.read_csv(
-            f'./inputCentral/school_{args.center_type}.csv',
+            f'./inputCentral/{args.centerFile}',
             )        
 
     # get shop data around center point

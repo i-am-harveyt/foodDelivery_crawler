@@ -22,10 +22,12 @@ import shutil
 def parse_args():
     parser = argparse.ArgumentParser(description="Finetune a transformers model on a summarization task")
     # ------------------------>
-    parser.add_argument("--center_type", type=str, default='most',)
+    # parser.add_argument("--center_type", type=str, default='most',)
+    parser.add_argument("--shopLstPath", type=str, default='../panda_data/shopLst/',)
+    parser.add_argument("--outputPath", type=str, default='../panda_data/panda_menu/')
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
-    parser.add_argument("--workerNumMeau", type=int, default=5)
+    parser.add_argument("--workerNumMenu", type=int, default=5)
     parser.add_argument("--doSleep", type=bool, default=True)
     args, unknown = parser.parse_known_args()
     return args
@@ -58,7 +60,7 @@ def getMenu(restaurant_code):
                 )
         if (data.status_code == 429):
             print('$429$, sleep')
-            time.sleep(random.uniform(30, 60))
+            time.sleep(random.uniform(30, 60)) # sleep 30~60s
             data = requests.get(
             url=url,
             params=query,
@@ -68,6 +70,7 @@ def getMenu(restaurant_code):
         print("connect refused?")
         search = bs4.BeautifulSoup(data.text, "lxml")
         # get the error message if website refused to connect
+        print("error message:")
         print(search.text)
         # randomly sleep 5~10s, if website refused to connect
         print("sleep ZZZzzz...ZZz..")
@@ -160,10 +163,10 @@ if __name__ == '__main__':
     
     # # get current date
     TODAY = str(datetime.now().strftime("%Y-%m-%d"))
-    print('start get meau')
+    print('start get menu')
 
     # read the restuarant list file 
-    shopLst_most = pd.read_csv(f'./shopLst/all_most_{TODAY}.csv')
+    shopLst_most = pd.read_csv(f'{args.shopLstPath}/all_most_{TODAY}.csv')
 
     """
     get menu data
@@ -171,12 +174,12 @@ if __name__ == '__main__':
     and get 429 error
     it take 1.5~2 hours to go through all the restuarant, about 50,000 resturant in Taiwan
     """
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMeau) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMenu) as executor:
         ttlResult = list(tqdm(executor.map(getMenu, shopLst_most['shopCode'].to_list()),
         total=len(shopLst_most['shopCode'].to_list())))
 
     # conver result to data frame
     df = pd.DataFrame(ttlResult)
     print('number of shop did not catch data: ', df.isnull().sum())
-    df.to_csv(f'./meau_Foodpanda/foodpandaMenu_{TODAY}.csv')
-    print(f'save ./meau_Foodpanda/foodpandaMenu_{TODAY}.csv')
+    df.to_csv(f'{args.outputPath}/foodpandaMenu_{TODAY}.csv')
+    print(f'save {{args.outputPath}}/foodpandaMenu_{TODAY}.csv')
