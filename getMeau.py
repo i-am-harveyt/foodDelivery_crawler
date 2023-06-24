@@ -51,8 +51,8 @@ def getMenu(restaurant_code):
     }
     try:
         # need sleep to prevent error 429
-        if bool(random.choices([1, 0], [1, 9])): # 90% not sleep, 10% sleep
-            time.sleep(random.uniform(0.5, 1.5)) # randomly sleep 0.5~1.5s, the minium requirement
+        if bool(random.choices([1, 0], [4, 6])): # 60% not sleep, 40% sleep
+            time.sleep(random.uniform(2, 3)) # randomly sleep 0.5~1.5s, the minium requirement
             data = requests.get(
                 url=url,
                 params=query,
