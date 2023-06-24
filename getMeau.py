@@ -23,7 +23,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Finetune a transformers model on a summarization task")
     # ------------------------>
     # parser.add_argument("--center_type", type=str, default='most',)
-    parser.add_argument("--shopLstPath", type=str, default='../panda_data/shopLst/',)
+    parser.add_argument("--shopLstPath", type=str, default='../panda_data/shopLst',)
     parser.add_argument("--outputPath", type=str, default='../panda_data/panda_menu/')
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
