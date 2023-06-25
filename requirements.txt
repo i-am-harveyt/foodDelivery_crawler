@@ -50,3 +50,6 @@ dropbox
 argparse
 pathlib
 pytest-shutil
+cryptography
+pyOpenSSL
+certifi

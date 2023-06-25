@@ -56,7 +56,8 @@ def getMenu(restaurant_code):
             data = requests.get(
                 url=url,
                 params=query,
-                headers=headers, 
+                headers=headers,
+                verify=False, 
                 )
         if (data.status_code == 429):
             print('$429$, sleep')
@@ -65,6 +66,7 @@ def getMenu(restaurant_code):
             url=url,
             params=query,
             headers=headers,
+            verify=False,
             )
     except:
         print("connect refused?")
@@ -79,6 +81,7 @@ def getMenu(restaurant_code):
             url=url,
             params=query,
             headers=headers,
+            verify=False,
             )
         
     if data.status_code == requests.codes.ok:
