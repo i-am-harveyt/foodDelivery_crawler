@@ -41,7 +41,7 @@ output: dataframe
 def getNearShop(lat, lng, city, loc):
 
     url = 'https://disco.deliveryhero.io/listing/api/v1/pandora/vendors'
-    currentTime = datetime.now()
+    currentTime = datetime.now() 
     result = {}
     result['shopName'] = []
     result['shopCode'] = []
@@ -206,11 +206,10 @@ def concatDF():
 
     df = pd.concat(joinedlist)
     df = df.dropna()
-    df = df.drop_duplicates(subset=['shopCode'])
+    df = df.drop_duplicates(subset=['shopCode']) # drop duplicate shopCode
     df.to_csv(f'{args.outputPath}/{TODAY}/all_most_{TODAY}.csv')
     df.to_csv(f'{args.outputPath}/all_most_{TODAY}.csv')
     print(f'write {args.outputPath}/{TODAY}/all_most_{TODAY}.csv')
-
     return df
 
 

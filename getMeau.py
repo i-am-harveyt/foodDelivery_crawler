@@ -70,20 +70,26 @@ def getMenu(restaurant_code):
             )
     except:
         print("connect refused?")
-        search = bs4.BeautifulSoup(data.text, "lxml")
+        try:
+            search = bs4.BeautifulSoup(data.text, "lxml")
+            print("error message:")
+            print(search.text)
+        except:
+            print("fail to get error message")
+            # search = bs4.BeautifulSoup(data.text, "lxml")
         # get the error message if website refused to connect
-        print("error message:")
-        print(search.text)
         # randomly sleep 5~10s, if website refused to connect
         print("sleep ZZZzzz...ZZz..")
         time.sleep(random.uniform(5, 10))
-        data = requests.get(
-            url=url,
-            params=query,
-            headers=headers,
-            verify=False,
-            )
-        
+        try:
+            data = requests.get(
+                url=url,
+                params=query,
+                headers=headers,
+                verify=False,
+                )
+        except:
+            return result
     if data.status_code == requests.codes.ok:
         data = data.json()
         result['shopCode'] = restaurant_code
