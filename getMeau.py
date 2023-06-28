@@ -27,17 +27,19 @@ def parse_args():
     parser.add_argument("--outputPath", type=str, default='../panda_data/panda_menu/')
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
-    parser.add_argument("--workerNumMenu", type=int, default=5)
+    parser.add_argument("--workerNumMenu", type=int, default=10)
     parser.add_argument("--doSleep", type=bool, default=True)
+    parser.add_argument("--reTryNum", type=int, default=5)
     args, unknown = parser.parse_known_args()
     return args
 
 
 """get menu from restaurant_code"""
 def getMenu(restaurant_code):
-    
     currentTime = datetime.now()
     result = {}
+
+    # data need for request
     url = f'https://tw.fd-api.com/api/v5/vendors/{restaurant_code}'
     query = {
         'include': 'menus',
@@ -45,51 +47,49 @@ def getMenu(restaurant_code):
         'dynamic_pricing': '0',
         'opening_type': 'delivery',
     }
-    # can add more detail information in the header, to let the crawler like real user
     headers = {
-        'Connection':'close',
+        'Connection': 'close',
     }
-    try:
-        # need sleep to prevent error 429
-        if bool(random.choices([1, 0], [4, 6])): # 60% not sleep, 40% sleep
-            time.sleep(random.uniform(2, 3)) # randomly sleep 0.5~1.5s, the minium requirement
-            data = requests.get(
-                url=url,
-                params=query,
-                headers=headers,
-                verify=False, 
-                )
-        if (data.status_code == 429):
-            print('$429$, sleep')
-            time.sleep(random.uniform(30, 60)) # sleep 30~60s
-            data = requests.get(
+    
+    def get_data():
+        nonlocal data # nonlocal variable, can be used in the function
+        data = requests.get(
             url=url,
             params=query,
             headers=headers,
-            verify=False,
-            )
+            # verify=False,
+        )
+    
+    def sleep_randomly(min_sleep, max_sleep):
+        time.sleep(random.uniform(min_sleep, max_sleep))
+    
+    try:
+        if bool(random.choices([1, 0], [1, 9])):
+            sleep_randomly(2, 3)
+            get_data()
+            
+        if data.status_code == 429:
+            print('$429$, sleep')
+            sleep_randomly(30, 60)
+            get_data()
     except:
         print("connect refused?")
         try:
+            # we used this way to get the error message, but sometime it will fail
             search = bs4.BeautifulSoup(data.text, "lxml")
             print("error message:")
             print(search.text)
         except:
             print("fail to get error message")
-            # search = bs4.BeautifulSoup(data.text, "lxml")
-        # get the error message if website refused to connect
-        # randomly sleep 5~10s, if website refused to connect
         print("sleep ZZZzzz...ZZz..")
-        time.sleep(random.uniform(5, 10))
+        sleep_randomly(30, 60)
         try:
-            data = requests.get(
-                url=url,
-                params=query,
-                headers=headers,
-                verify=False,
-                )
+            # try again
+            get_data()
         except:
+            failDict['shopCode'].append(restaurant_code)
             return result
+    # if status code is ok, then get the data
     if data.status_code == requests.codes.ok:
         data = data.json()
         result['shopCode'] = restaurant_code
@@ -98,46 +98,48 @@ def getMenu(restaurant_code):
         result['location'] = [data['data']['latitude'], data['data']['longitude']]
         result['rate'] = data['data']['rating']
         result['updateDate'] = currentTime
-        tmp = []
-        if data['data']['is_pickup_enabled']==True:
-            result['pickup'] = 1
-        else:
-            result['pickup'] = 0
+        result['pickup'] = 1 if data['data']['is_pickup_enabled'] else 0
+        
         tmpInshop = 0
-        for i in range(len(data['data']['food_characteristics'])):
-            if '店內價' in data['data']['food_characteristics'][i]['name']:
+        tmp = []
+        
+        for item in data['data']['food_characteristics']:
+            if '店內價' in item['name']:
                 tmpInshop = 1
             else:
                 try:
-                    tmp.append(data['data']['food_characteristics'][i]['name'])
+                    tmp.append(item['name'])
                 except:
                     pass
-        if tmpInshop==1:
-            result['inShopPrice'] = 1
-        else:
-            result['inShopPrice'] = 0
-
+        
+        result['inShopPrice'] = tmpInshop
         result['shopTag'] = tmp
-
+        
         tmp = []
-        for i in range(len(data['data']['discounts'])):
-            tmp.append(data['data']['discounts'][i]['name'])
+        
+        for discount in data['data']['discounts']:
+            tmp.append(discount['name'])
+        
         result['discount'] = tmp
-        tmp = {}
-        tmp['product'] = []
-        tmp['preDiscountPrice'] = []
-        tmp['discountedPrice'] = []
-        tmp['description'] = []
+        tmp = {
+            'product': [],
+            'preDiscountPrice': [],
+            'discountedPrice': [],
+            'description': []
+        }
+        
         try:
-            for i in range(len(data['data']['menus'][0]['menu_categories'])):
-                for k in range(len(data['data']['menus'][0]['menu_categories'][i]['products'])):
-                    tmp['product'].append(data['data']['menus'][0]['menu_categories'][i]['products'][k]['name'])
-                    tmp['description'].append(data['data']['menus'][0]['menu_categories'][i]['products'][k]['description'])
+            for category in data['data']['menus'][0]['menu_categories']:
+                for product in category['products']:
+                    tmp['product'].append(product['name'])
+                    tmp['description'].append(product['description'])
+                    
                     try:
-                        tmp['preDiscountPrice'].append(data['data']['menus'][0]['menu_categories'][i]['products'][k]['product_variations'][0]['price_before_discount'])
+                        tmp['preDiscountPrice'].append(product['product_variations'][0]['price_before_discount'])
                     except:
                         tmp['preDiscountPrice'].append('')
-                    tmp['discountedPrice'].append(data['data']['menus'][0]['menu_categories'][i]['products'][k]['product_variations'][0]['price'])
+                    
+                    tmp['discountedPrice'].append(product['product_variations'][0]['price'])
         except:
             tmp['product'].append('')
             tmp['preDiscountPrice'].append('')
@@ -159,8 +161,10 @@ def getMenu(restaurant_code):
             result['pickup'] = np.NaN
         except:
             pass
+    
     if len(result) == 0:
-      print('error code: ', data.status_code)
+        print('error code: ', data.status_code)
+    
     return result
 
 
@@ -170,8 +174,12 @@ if __name__ == '__main__':
 
     args = parse_args()
     
+    failDict = {} # record the fail shop code
+    failDict['shopCode'] = []
+
     # # get current date
     TODAY = str(datetime.now().strftime("%Y-%m-%d"))
+    TODAY = '2023-06-24'
     print('start get menu')
 
     # read the restuarant list file 
@@ -183,12 +191,24 @@ if __name__ == '__main__':
     and get 429 error
     it take 1.5~2 hours to go through all the restuarant, about 50,000 resturant in Taiwan
     """
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMenu) as executor:
-        ttlResult = list(tqdm(executor.map(getMenu, shopLst_most['shopCode'].to_list()),
-        total=len(shopLst_most['shopCode'].to_list())))
+    for i in range(args.reTryNum):
+        print(f"{i+1} round get menu")
 
-    # conver result to data frame
-    df = pd.DataFrame(ttlResult)
-    print('number of shop did not catch data: ', df.isnull().sum())
-    df.to_csv(f'{args.outputPath}/foodpandaMenu_{TODAY}.csv')
-    print(f'save {{args.outputPath}}/foodpandaMenu_{TODAY}.csv')
+        if (i == 0):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMenu) as executor:
+                ttlResult = list(tqdm(executor.map(getMenu, shopLst_most['shopCode'].to_list()),
+                total=len(shopLst_most['shopCode'].to_list())))
+        else:
+            if len(failDict['shopCode']) == 0:
+                print('no shop code fail')
+                break
+            else:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMenu) as executor:
+                    failTtlResult = list(tqdm(executor.map(getMenu, failDict['shopCode']),
+                    total=len(failDict['shopCode'])))
+                ttlResult.extend(failTtlResult) # add the fail result ttlResult
+        # conver result to data frame
+        df = pd.DataFrame(ttlResult)
+        print('number of shop did not catch data: ', df.isnull().sum())
+        df.to_csv(f'{args.outputPath}/foodpandaMenu_{TODAY}.csv')
+        print(f'save {{args.outputPath}}/foodpandaMenu_{TODAY}.csv')
