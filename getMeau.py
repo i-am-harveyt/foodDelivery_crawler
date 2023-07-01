@@ -188,7 +188,10 @@ if __name__ == '__main__':
     print('start get menu')
 
     # read the restuarant list file 
-    shopLst_most = pd.read_csv(f'{args.shopLstPath}/all_most_{TODAY}.csv')
+    if args.debug:
+        shopLst_most = pd.read_csv(f'{args.shopLstPath}/all_most_{TODAY}.csv',nrows=3)
+    else:
+        shopLst_most = pd.read_csv(f'{args.shopLstPath}/all_most_{TODAY}.csv')
 
     """
     get menu data
