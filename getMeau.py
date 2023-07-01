@@ -173,13 +173,18 @@ def getMenu(restaurant_code):
 if __name__ == '__main__':
 
     args = parse_args()
-    
+    # check whether path exist
+    if (os.path.exists(f'{args.outputPath}/')):
+        pass
+    else:
+        os.makedirs(f'{args.outputPath}')
+
     failDict = {} # record the fail shop code
     failDict['shopCode'] = []
 
     # # get current date
     TODAY = str(datetime.now().strftime("%Y-%m-%d"))
-    TODAY = '2023-06-24'
+    # TODAY = '2023-06-24'
     print('start get menu')
 
     # read the restuarant list file 
@@ -210,5 +215,9 @@ if __name__ == '__main__':
         # conver result to data frame
         df = pd.DataFrame(ttlResult)
         print('number of shop did not catch data: ', df.isnull().sum())
-        df.to_csv(f'{args.outputPath}/foodpandaMenu_{TODAY}.csv')
-        print(f'save {{args.outputPath}}/foodpandaMenu_{TODAY}.csv')
+        try:
+            df.to_csv(f'{args.outputPath}/foodpandaMenu_{TODAY}.csv')
+            print(f'save {{args.outputPath}}/foodpandaMenu_{TODAY}.csv')
+        except:
+            df.to_csv(f'foodpandaMenu_{TODAY}.csv')
+            print(f'save foodpandaMenu_{TODAY}.csv')
