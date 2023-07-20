@@ -1,30 +1,28 @@
 import os
 # os.system('pip install -r requirements.txt')
-import re
 import requests
 import pandas as pd
-import json
 from datetime import datetime
 import concurrent.futures
 import time
-from random import randint
-import pickle
 from tqdm import tqdm
 import random
 import bs4
 import numpy as np
 import argparse
-from dropbox.exceptions import AuthError
-import pathlib
-import shutil
 
 """pass argument"""
+
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="Finetune a transformers model on a summarization task")
+    parser = argparse.ArgumentParser(
+        description="Finetune a transformers model on a summarization task")
     # ------------------------>
     # parser.add_argument("--center_type", type=str, default='most',)
-    parser.add_argument("--shopLstPath", type=str, default='../panda_data/shopLst',)
-    parser.add_argument("--outputPath", type=str, default='../panda_data/panda_menu')
+    parser.add_argument("--shopLstPath", type=str,
+                        default='../panda_data/shopLst',)
+    parser.add_argument("--outputPath", type=str,
+                        default='../panda_data/panda_menu')
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
     parser.add_argument("--workerNumMenu", type=int, default=10)
@@ -35,6 +33,8 @@ def parse_args():
 
 
 """get menu from restaurant_code"""
+
+
 def getMenu(restaurant_code):
     currentTime = datetime.now()
     result = {}
@@ -50,24 +50,24 @@ def getMenu(restaurant_code):
     headers = {
         'Connection': 'close',
     }
-    
+
     def get_data():
-        nonlocal data # nonlocal variable, can be used in the function
+        nonlocal data  # nonlocal variable, can be used in the function
         data = requests.get(
             url=url,
             params=query,
             headers=headers,
             # verify=False,
         )
-    
+
     def sleep_randomly(min_sleep, max_sleep):
         time.sleep(random.uniform(min_sleep, max_sleep))
-    
+
     try:
         if bool(random.choices([1, 0], [1, 9])):
             sleep_randomly(2, 3)
             get_data()
-            
+
         if data.status_code == 429:
             print('$429$, sleep')
             sleep_randomly(30, 60)
@@ -95,14 +95,34 @@ def getMenu(restaurant_code):
         result['shopCode'] = restaurant_code
         result['Url'] = url
         result['address'] = data['data']['address']
-        result['location'] = [data['data']['latitude'], data['data']['longitude']]
+        result['location'] = [data['data']
+                              ['latitude'], data['data']['longitude']]
         result['rate'] = data['data']['rating']
         result['updateDate'] = currentTime
         result['pickup'] = 1 if data['data']['is_pickup_enabled'] else 0
-        
+
+        # get platform service fee
+        # I'm not very sure about the meanings respectively,
+        # so I fetch 'em all
+        result["service_fee_total"] = data[
+            "data"][
+            "dynamic_pricing"][
+            "service_fee"][
+            "total"]
+        result["service_fee_type"] = data[
+            "data"][
+            "dynamic_pricing"][
+            "service_fee"][
+            "type"]
+        result["service_fee_setup_value"] = data[
+            "data"][
+            "dynamic_pricing"][
+            "service_fee"][
+            "setup_value"]
+
         tmpInshop = 0
         tmp = []
-        
+
         for item in data['data']['food_characteristics']:
             if '店內價' in item['name']:
                 tmpInshop = 1
@@ -111,15 +131,15 @@ def getMenu(restaurant_code):
                     tmp.append(item['name'])
                 except:
                     pass
-        
+
         result['inShopPrice'] = tmpInshop
         result['shopTag'] = tmp
-        
+
         tmp = []
-        
+
         for discount in data['data']['discounts']:
             tmp.append(discount['name'])
-        
+
         result['discount'] = tmp
         tmp = {
             'product': [],
@@ -127,25 +147,27 @@ def getMenu(restaurant_code):
             'discountedPrice': [],
             'description': []
         }
-        
+
         try:
             for category in data['data']['menus'][0]['menu_categories']:
                 for product in category['products']:
                     tmp['product'].append(product['name'])
                     tmp['description'].append(product['description'])
-                    
+
                     try:
-                        tmp['preDiscountPrice'].append(product['product_variations'][0]['price_before_discount'])
+                        tmp['preDiscountPrice'].append(
+                            product['product_variations'][0]['price_before_discount'])
                     except:
                         tmp['preDiscountPrice'].append('')
-                    
-                    tmp['discountedPrice'].append(product['product_variations'][0]['price'])
+
+                    tmp['discountedPrice'].append(
+                        product['product_variations'][0]['price'])
         except:
             tmp['product'].append('')
             tmp['preDiscountPrice'].append('')
             tmp['discountedPrice'].append('')
             tmp['description'].append('')
-        
+
         result['menu'] = tmp
     else:
         try:
@@ -161,10 +183,10 @@ def getMenu(restaurant_code):
             result['pickup'] = np.NaN
         except:
             pass
-    
+
     if len(result) == 0:
         print('error code: ', data.status_code)
-    
+
     return result
 
 
@@ -179,7 +201,7 @@ if __name__ == '__main__':
     else:
         os.makedirs(f'{args.outputPath}')
 
-    failDict = {} # record the fail shop code
+    failDict = {}  # record the fail shop code
     failDict['shopCode'] = []
 
     # # get current date
@@ -187,9 +209,10 @@ if __name__ == '__main__':
     # TODAY = '2023-06-24'
     print('start get menu')
 
-    # read the restuarant list file 
+    # read the restuarant list file
     if args.debug:
-        shopLst_most = pd.read_csv(f'{args.shopLstPath}/all_most_{TODAY}.csv',nrows=3)
+        shopLst_most = pd.read_csv(
+            f'{args.shopLstPath}/all_most_{TODAY}.csv', nrows=3)
     else:
         shopLst_most = pd.read_csv(f'{args.shopLstPath}/all_most_{TODAY}.csv')
 
@@ -205,7 +228,7 @@ if __name__ == '__main__':
         if (i == 0):
             with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMenu) as executor:
                 ttlResult = list(tqdm(executor.map(getMenu, shopLst_most['shopCode'].to_list()),
-                total=len(shopLst_most['shopCode'].to_list())))
+                                      total=len(shopLst_most['shopCode'].to_list())))
         else:
             if len(failDict['shopCode']) == 0:
                 print('no shop code fail')
@@ -213,8 +236,9 @@ if __name__ == '__main__':
             else:
                 with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMenu) as executor:
                     failTtlResult = list(tqdm(executor.map(getMenu, failDict['shopCode']),
-                    total=len(failDict['shopCode'])))
-                ttlResult.extend(failTtlResult) # add the fail result ttlResult
+                                              total=len(failDict['shopCode'])))
+                # add the fail result ttlResult
+                ttlResult.extend(failTtlResult)
         # conver result to data frame
         df = pd.DataFrame(ttlResult)
         print('number of shop did not catch data: ', df.isnull().sum())
