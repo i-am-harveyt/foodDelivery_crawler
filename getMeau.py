@@ -48,7 +48,7 @@ def getMenu(restaurant_code):
         'opening_type': 'delivery',
     }
     headers = {
-        'Connection': 'close',
+        'Connection': 'keep-alive',
     }
 
     def get_data():
@@ -104,21 +104,26 @@ def getMenu(restaurant_code):
         # get platform service fee
         # I'm not very sure about the meanings respectively,
         # so I fetch 'em all
-        result["service_fee_total"] = data[
-            "data"][
-            "dynamic_pricing"][
-            "service_fee"][
-            "total"]
-        result["service_fee_type"] = data[
-            "data"][
-            "dynamic_pricing"][
-            "service_fee"][
-            "type"]
-        result["service_fee_setup_value"] = data[
-            "data"][
-            "dynamic_pricing"][
-            "service_fee"][
-            "setup_value"]
+        try:
+            result["service_fee_total"] = data[
+                "data"][
+                "dynamic_pricing"][
+                "service_fee"][
+                "total"]
+            result["service_fee_type"] = data[
+                "data"][
+                "dynamic_pricing"][
+                "service_fee"][
+                "type"]
+            result["service_fee_setup_value"] = data[
+                "data"][
+                "dynamic_pricing"][
+                "service_fee"][
+                "setup_value"]
+        except:
+            print(f"{restaurant_code} may not currently opened")
+            result["service_fee_type"] = np.NaN
+            result["service_fee_setup_value"] = np.NaN
 
         tmpInshop = 0
         tmp = []
@@ -226,17 +231,23 @@ if __name__ == '__main__':
         print(f"{i+1} round get menu")
 
         if (i == 0):
-            with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMenu) as executor:
-                ttlResult = list(tqdm(executor.map(getMenu, shopLst_most['shopCode'].to_list()),
-                                      total=len(shopLst_most['shopCode'].to_list())))
+            with concurrent.futures.ThreadPoolExecutor(
+                    max_workers=args.workerNumMenu) as executor:
+                ttlResult = \
+                    list(tqdm(
+                        executor.map(
+                            getMenu, shopLst_most['shopCode'].to_list()),
+                        total=len(shopLst_most['shopCode'].to_list())))
         else:
             if len(failDict['shopCode']) == 0:
                 print('no shop code fail')
                 break
             else:
-                with concurrent.futures.ThreadPoolExecutor(max_workers=args.workerNumMenu) as executor:
-                    failTtlResult = list(tqdm(executor.map(getMenu, failDict['shopCode']),
-                                              total=len(failDict['shopCode'])))
+                with concurrent.futures.ThreadPoolExecutor(
+                        max_workers=args.workerNumMenu) as executor:
+                    failTtlResult = \
+                        list(tqdm(executor.map(getMenu, failDict['shopCode']),
+                                  total=len(failDict['shopCode'])))
                 # add the fail result ttlResult
                 ttlResult.extend(failTtlResult)
         # conver result to data frame
