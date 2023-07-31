@@ -16,7 +16,7 @@ def parse_args():
         description="get shop list from specific location")
     # ------------------------>
     parser.add_argument("--centerFile", type=str, default='school.csv',)
-    parser.add_argument("--debug", type=bool, default=True)
+    parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
     parser.add_argument("--doSleep", type=bool, default=True)
     parser.add_argument("--outputPath", type=str,
