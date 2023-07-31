@@ -36,27 +36,15 @@ def getNearShop(lat, lng, city, loc):
 
     URL = 'https://disco.deliveryhero.io/listing/api/v1/pandora/vendors'
     now = datetime.now()
-    result = {}
-    result['shopName'] = []
-    result['shopCode'] = []
-    result['budget'] = []
-    result['category'] = []
-    result['pandaOnly'] = []
-    result['minFee'] = []
-    result['minOrder'] = []
-    result['minDelTime'] = []
-    result['minPickTime'] = []
-    result['distance'] = []
-    result['rateNum'] = []
-    result['address'] = []
-    result['addressLine2'] = []
-    result['chainCode'] = []
-    result['city'] = []
-    result["latitude"] = []
-    result["longitude"] = []
-    result["hasServiceFee"] = []
-    result["serviceFeeAmount(%)"] = []
-    result["updateDate"] = []
+    result = {
+        'shopName': [], 'shopCode': [], 'budget': [],
+        'category': [], 'pandaOnly': [], 'minFee': [],
+        'minOrder': [], 'minDelTime': [], 'minPickTime': [],
+        'distance': [], 'rateNum': [], 'address': [],
+        'addressLine2': [], 'chainCode': [], 'city': [],
+        "latitude": [], "longitude": [], "hasServiceFee": [],
+        "serviceFeeAmount(%)": [], "updateDate": [],
+    }
 
     query = {
         'longitude': lng,
@@ -178,8 +166,15 @@ def getNearShop(lat, lng, city, loc):
 
     with open(
             f"{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.json",
-            'w', encoding="utf-8") as f:
-        f.write(json.dumps(json_data))
+            'a', encoding="utf-8") as f:
+        f.write('[')
+        for e in json_data:
+            f.write(json.dumps(e))
+            f.write(',')
+    with open(
+            f"{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.json",
+            'r+', encoding="utf-8") as f:
+        f.write(f.read()[:-1] + ']')
 
 
 def concatDF():
@@ -222,7 +217,7 @@ if __name__ == '__main__':
     if args.debug:
         centerLst_most = pd.read_csv(
             f'./inputCentral/{args.centerFile}',
-            nrows=1,
+            nrows=3,
         )
     else:
         centerLst_most = pd.read_csv(
