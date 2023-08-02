@@ -82,6 +82,13 @@ def getNearShop(lat, lng, city, loc):
         datalen = data['data']['available_count']
         restaurants = data['data']['items']
 
+    path = f"{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.json"
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+
+    with open(path, 'a', encoding="utf-8") as f:
+        f.write('[')
+
     for i in range(0, datalen, 100):
         query = {
             'longitude': lng,
@@ -118,63 +125,55 @@ def getNearShop(lat, lng, city, loc):
             continue
 
         restaurants = res.json()["data"]["items"]
-        json_data = []
-        # go through all the restaurants
-        for restaurant in restaurants:
-            json_data.append(restaurant)
-            result['shopName'].append(restaurant.get('name', ''))
-            result['shopCode'].append(restaurant.get('code', ''))
-            result['budget'].append(restaurant.get('budget', 0))
-            result['distance'].append(restaurant.get('distance', 0.0))
-            result['pandaOnly'].append(
-                restaurant.get('is_best_in_city', False))
-            result['rateNum'].append(restaurant.get('review_number', 0))
-            result['updateDate'].append(now.strftime("%Y-%m-%d %H:%M:%S"))
-            result['city'].append(restaurant['city'].get('name', ''))
-            result['address'].append(restaurant.get('address', ''))
-            result['addressLine2'].append(restaurant.get('address_line2', ''))
-            result['latitude'].append(restaurant.get('latitude', 0.0))
-            result['longitude'].append(restaurant.get('longitude', 0.0))
-            result['hasServiceFee'].append(
-                restaurant.get('is_service_fee_enabled', False))
-            result['serviceFeeAmount(%)'].append(
-                restaurant.get('service_fee_percentage_amount', 0))
+        with open(path, 'r+', encoding="utf-8") as f:
+            # go through all the restaurants
+            for restaurant in restaurants:
+                f.write(json.dumps(restaurant))
+                result['shopName'].append(restaurant.get('name', ''))
+                result['shopCode'].append(restaurant.get('code', ''))
+                result['budget'].append(restaurant.get('budget', 0))
+                result['distance'].append(restaurant.get('distance', 0.0))
+                result['pandaOnly'].append(
+                    restaurant.get('is_best_in_city', False))
+                result['rateNum'].append(restaurant.get('review_number', 0))
+                result['updateDate'].append(now.strftime("%Y-%m-%d %H:%M:%S"))
+                result['city'].append(restaurant['city'].get('name', ''))
+                result['address'].append(restaurant.get('address', ''))
+                result['addressLine2'].append(
+                    restaurant.get('address_line2', ''))
+                result['latitude'].append(restaurant.get('latitude', 0.0))
+                result['longitude'].append(restaurant.get('longitude', 0.0))
+                result['hasServiceFee'].append(
+                    restaurant.get('is_service_fee_enabled', False))
+                result['serviceFeeAmount(%)'].append(
+                    restaurant.get('service_fee_percentage_amount', 0))
 
-            categories = [cat['name']
-                          for cat in restaurant.get('cuisines', [])]
-            result['category'].append(categories)
+                categories = [cat['name']
+                              for cat in restaurant.get('cuisines', [])]
+                result['category'].append(categories)
 
-            chain = restaurant['chain'].get(
-                'main_vendor_code', "") if restaurant.get('chain') else ""
-            result['chainCode'].append(chain)
+                chain = restaurant['chain'].get(
+                    'main_vendor_code', "") if restaurant.get('chain') else ""
+                result['chainCode'].append(chain)
 
-            result["minFee"].append(restaurant.get('minimum_delivery_fee', 0))
-            result["minOrder"].append(
-                restaurant.get('minimum_order_amount', 0))
-            result["minDelTime"].append(
-                restaurant.get('minimum_delivery_time', 0))
-            result["minPickTime"].append(
-                restaurant.get('minimum_pickup_time', 0))
+                result["minFee"].append(
+                    restaurant.get('minimum_delivery_fee', 0))
+                result["minOrder"].append(
+                    restaurant.get('minimum_order_amount', 0))
+                result["minDelTime"].append(
+                    restaurant.get('minimum_delivery_time', 0))
+                result["minPickTime"].append(
+                    restaurant.get('minimum_pickup_time', 0))
+            f.write(f.read() + ']')
 
-    df = pd.DataFrame.from_dict(result)
+            df = pd.DataFrame.from_dict(result)
 
-    # output path, change this if needed
-    # creat date folder under shoplist if it is not exsist
-    if not os.path.exists(f'{args.outputPath}/{TODAY}'):
-        os.makedirs(f'{args.outputPath}/{TODAY}')
-    df.to_csv(f'{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.csv')
-
-    with open(
-            f"{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.json",
-            'a', encoding="utf-8") as f:
-        f.write('[')
-        for e in json_data:
-            f.write(json.dumps(e))
-            f.write(',')
-    with open(
-            f"{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.json",
-            'r+', encoding="utf-8") as f:
-        f.write(f.read()[:-1] + ']')
+            # output path, change this if needed
+            # creat date folder under shoplist if it is not exsist
+            if not os.path.exists(f'{args.outputPath}/{TODAY}'):
+                os.makedirs(f'{args.outputPath}/{TODAY}')
+            df.to_csv(
+                f'{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.csv')
 
 
 def concatDF():
