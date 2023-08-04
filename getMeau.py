@@ -35,7 +35,7 @@ def parse_args():
 """get menu from restaurant_code"""
 
 
-def getMenu(restaurant_code="tzvt"):
+def getMenu(restaurant_code):
     currentTime = datetime.now()
     result = {}
 
@@ -99,7 +99,7 @@ def getMenu(restaurant_code="tzvt"):
         result['location'] = \
             [data['data']['latitude'], data['data']['longitude']]
         result['rate'] = data['data']['rating']
-        result['updateDate'] = currentTime
+        result['updateDate'] = currentTime.strftime('%Y-%m-%d %H:%M:%S')
         result['pickup'] = 1 if data['data']['is_pickup_enabled'] else 0
 
         # get platform service fee
