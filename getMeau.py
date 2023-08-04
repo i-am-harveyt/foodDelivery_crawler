@@ -178,8 +178,7 @@ def getMenu(restaurant_code="tzvt"):
             tmp['discountedPrice'].append('')
             tmp['description'].append('')
 
-        result = tmp
-        # result['menu'] = json.dumps(tmp, ensure_ascii=False)
+        result['menu'] = json.dumps(tmp, ensure_ascii=False)
     else:
         try:
             data = data.json()
@@ -205,9 +204,6 @@ def getMenu(restaurant_code="tzvt"):
 
 
 if __name__ == '__main__':
-    result = getMenu()
-    print(result)
-def main():
     '''
     main
     execute time about 2 hours
