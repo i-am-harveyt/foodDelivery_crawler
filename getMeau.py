@@ -1,5 +1,4 @@
 import os
-# os.system('pip install -r requirements.txt')
 import requests
 import pandas as pd
 from datetime import datetime
@@ -10,6 +9,7 @@ import random
 import bs4
 import numpy as np
 import argparse
+import json
 
 """pass argument"""
 
@@ -35,7 +35,7 @@ def parse_args():
 """get menu from restaurant_code"""
 
 
-def getMenu(restaurant_code):
+def getMenu(restaurant_code="tzvt"):
     currentTime = datetime.now()
     result = {}
 
@@ -75,7 +75,8 @@ def getMenu(restaurant_code):
     except:
         print("connect refused?")
         try:
-            # we used this way to get the error message, but sometime it will fail
+            # we used this way to get the error message,
+            # but sometime it will fail
             search = bs4.BeautifulSoup(data.text, "lxml")
             print("error message:")
             print(search.text)
@@ -95,8 +96,8 @@ def getMenu(restaurant_code):
         result['shopCode'] = restaurant_code
         result['Url'] = url
         result['address'] = data['data']['address']
-        result['location'] = [data['data']
-                              ['latitude'], data['data']['longitude']]
+        result['location'] = \
+            [data['data']['latitude'], data['data']['longitude']]
         result['rate'] = data['data']['rating']
         result['updateDate'] = currentTime
         result['pickup'] = 1 if data['data']['is_pickup_enabled'] else 0
@@ -110,19 +111,23 @@ def getMenu(restaurant_code):
                 "dynamic_pricing"][
                 "service_fee"][
                 "total"]
+        except:
+            result["service_fee_total"] = 0
+        try:
             result["service_fee_type"] = data[
                 "data"][
                 "dynamic_pricing"][
                 "service_fee"][
                 "type"]
+        except:
+            result["service_fee_type"] = np.NaN
+        try:
             result["service_fee_setup_value"] = data[
                 "data"][
                 "dynamic_pricing"][
                 "service_fee"][
                 "setup_value"]
         except:
-            print(f"{restaurant_code} may not currently opened")
-            result["service_fee_type"] = np.NaN
             result["service_fee_setup_value"] = np.NaN
 
         tmpInshop = 0
@@ -173,7 +178,8 @@ def getMenu(restaurant_code):
             tmp['discountedPrice'].append('')
             tmp['description'].append('')
 
-        result['menu'] = tmp
+        result = tmp
+        # result['menu'] = json.dumps(tmp, ensure_ascii=False)
     else:
         try:
             data = data.json()
@@ -186,6 +192,9 @@ def getMenu(restaurant_code):
             result['location'] = ""
             result['rate'] = np.NaN
             result['pickup'] = np.NaN
+            result["service_fee_total"] = np.NaN
+            result["service_fee_type"] = np.NaN
+            result["service_fee_setup_value"] = np.NaN
         except:
             pass
 
@@ -195,10 +204,14 @@ def getMenu(restaurant_code):
     return result
 
 
-'''main'''
-'''execute time about 2 hours'''
 if __name__ == '__main__':
-
+    result = getMenu()
+    print(result)
+def main():
+    '''
+    main
+    execute time about 2 hours
+    '''
     args = parse_args()
     # check whether path exist
     if (os.path.exists(f'{args.outputPath}/')):
@@ -246,8 +259,13 @@ if __name__ == '__main__':
                 with concurrent.futures.ThreadPoolExecutor(
                         max_workers=args.workerNumMenu) as executor:
                     failTtlResult = \
-                        list(tqdm(executor.map(getMenu, failDict['shopCode']),
-                                  total=len(failDict['shopCode'])))
+                        list(
+                            tqdm(
+                                executor.map(
+                                    getMenu, failDict['shopCode']),
+                                total=len(failDict['shopCode'])
+                            )
+                        )
                 # add the fail result ttlResult
                 ttlResult.extend(failTtlResult)
         # conver result to data frame
