@@ -121,6 +121,15 @@ def getNearShop(lat, lng):
             restaurants = res.json()["data"]["items"]
             # go through all the restaurants
             for restaurant in restaurants:
+
+                # save to json file
+                if not os.path.exists(f'{args.outputPath}/shop_json'):
+                    os.makedirs(f'{args.outputPath}/shop_json')
+                filepath = f'{args.outputPath}/shop_json/foodpandaShop_{restaurant.get("code", "")}.json'
+                if not os.path.exists(filepath):
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        json.dump(restaurant, f, ensure_ascii=False)
+
                 result['shopName'].append(restaurant.get('name', ''))
                 result['shopCode'].append(restaurant.get('code', ''))
                 result['budget'].append(restaurant.get('budget', 0))

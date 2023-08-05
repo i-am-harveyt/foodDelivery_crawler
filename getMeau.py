@@ -32,10 +32,10 @@ def parse_args():
     return args
 
 
-"""get menu from restaurant_code"""
-
-
 def getMenu(restaurant_code):
+    """
+    get menu from restaurant_code
+    """
     currentTime = datetime.now()
     result = {}
 
@@ -93,6 +93,14 @@ def getMenu(restaurant_code):
     # if status code is ok, then get the data
     if data.status_code == requests.codes.ok:
         data = data.json()
+
+        # write into json file
+        if not os.path.exists(f'{args.outputPath}/menuJson_{TODAY}'):
+            os.makedirs(f'{args.outputPath}/menuJson_{TODAY}')
+        filepath = f'{args.outputPath}/menuJson_{TODAY}/foodpandaMenu_{restaurant_code}.json'
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False)
+
         result['shopCode'] = restaurant_code
         result['Url'] = url
         result['address'] = data['data']['address']
@@ -210,9 +218,7 @@ if __name__ == '__main__':
     '''
     args = parse_args()
     # check whether path exist
-    if (os.path.exists(f'{args.outputPath}/')):
-        pass
-    else:
+    if not os.path.exists(f'{args.outputPath}/'):
         os.makedirs(f'{args.outputPath}')
 
     failDict = {}  # record the fail shop code
@@ -226,7 +232,7 @@ if __name__ == '__main__':
     # read the restuarant list file
     if args.debug:
         shopLst_most = pd.read_csv(
-            f'{args.shopLstPath}/all_most_{TODAY}.csv', nrows=3)
+            f'{args.shopLstPath}/all_most_{TODAY}.csv', nrows=100)
     else:
         shopLst_most = pd.read_csv(f'{args.shopLstPath}/all_most_{TODAY}.csv')
 
@@ -243,10 +249,15 @@ if __name__ == '__main__':
             with concurrent.futures.ThreadPoolExecutor(
                     max_workers=args.workerNumMenu) as executor:
                 ttlResult = \
-                    list(tqdm(
-                        executor.map(
-                            getMenu, shopLst_most['shopCode'].to_list()),
-                        total=len(shopLst_most['shopCode'].to_list())))
+                    list(
+                        tqdm(
+                            executor.map(
+                                getMenu,
+                                shopLst_most['shopCode'].to_list()
+                            ),
+                            total=len(shopLst_most['shopCode'].to_list())
+                        )
+                    )
         else:
             if len(failDict['shopCode']) == 0:
                 print('no shop code fail')
