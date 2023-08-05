@@ -15,9 +15,9 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="get shop list from specific location")
     # ------------------------>
-    parser.add_argument("--centerFile", type=str, default='school.csv',)
+    parser.add_argument("--centerFile", type=str, default='tw_points.csv',)
     parser.add_argument("--debug", type=bool, default=False)
-    parser.add_argument("--workerNumShop", type=int, default=10)
+    parser.add_argument("--workerNumShop", type=int, default=5)
     parser.add_argument("--doSleep", type=bool, default=True)
     parser.add_argument("--outputPath", type=str,
                         default='../panda_data/shopLst/')
@@ -25,7 +25,7 @@ def parse_args():
     return args
 
 
-def getNearShop(lat, lng, city, loc):
+def getNearShop(lat, lng):
     """input columns:
     lat: 中心點latitude, 必要變數
     lng: 中心點longitude, 必要變數
@@ -41,7 +41,8 @@ def getNearShop(lat, lng, city, loc):
         'category': [], 'pandaOnly': [], 'minFee': [],
         'minOrder': [], 'minDelTime': [], 'minPickTime': [],
         'distance': [], 'rateNum': [], 'address': [],
-        'addressLine2': [], 'chainCode': [], 'city': [],
+        # 'addressLine2': [],
+        'chainCode': [], 'city': [],
         "latitude": [], "longitude": [], "hasServiceFee": [],
         "serviceFeeAmount(%)": [], "updateDate": [],
     }
@@ -82,53 +83,44 @@ def getNearShop(lat, lng, city, loc):
         datalen = data['data']['available_count']
         restaurants = data['data']['items']
 
-    path = f"{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.json"
-    if not os.path.exists(os.path.dirname(path)):
-        os.makedirs(os.path.dirname(path))
+        for i in range(0, datalen, 100):
+            query = {
+                'longitude': lng,
+                'latitude': lat,
+                'language_id': 6,
+                'include': 'characteristics',
+                'dynamic_pricing': 0,
+                'configuration': 'Variant1',
+                'country': 'tw',
+                'budgets': '',
+                'cuisine': '',
+                'sort': '',
+                'food_characteristic': '',
+                'use_free_delivery_label': False,
+                'vertical': 'restaurants',
+                'limit': datalen,
+                'offset': i,
+                'customer_type': 'regular'
+            }
+            headers = {
+                'x-disco-client-id': 'web',
+            }
+            res = requests.get(url=URL, params=query, headers=headers)
 
-    with open(path, 'a', encoding="utf-8") as f:
-        f.write('[')
+            if i % 10 == 0:
+                time.sleep(3)
+                print('sleeping at', i)
+            elif i % 5 == 0:
+                time.sleep(randint(0, 4))
+                print('sleeping at', i)
 
-    for i in range(0, datalen, 100):
-        query = {
-            'longitude': lng,
-            'latitude': lat,
-            'language_id': 6,
-            'include': 'characteristics',
-            'dynamic_pricing': 0,
-            'configuration': 'Variant1',
-            'country': 'tw',
-            'budgets': '',
-            'cuisine': '',
-            'sort': '',
-            'food_characteristic': '',
-            'use_free_delivery_label': False,
-            'vertical': 'restaurants',
-            'limit': datalen,
-            'offset': i,
-            'customer_type': 'regular'
-        }
-        headers = {
-            'x-disco-client-id': 'web',
-        }
-        res = requests.get(url=URL, params=query, headers=headers)
+            if res.status_code != requests.codes.ok:
+                print('faill to request')
+                continue
 
-        if i % 10 == 0:
-            time.sleep(3)
-            print('sleeping at', i)
-        elif i % 5 == 0:
-            time.sleep(randint(0, 4))
-            print('sleeping at', i)
-
-        if res.status_code != requests.codes.ok:
-            print('faill to request')
-            continue
-
-        restaurants = res.json()["data"]["items"]
-        with open(path, 'r+', encoding="utf-8") as f:
+            restaurants = res.json()["data"]["items"]
             # go through all the restaurants
             for restaurant in restaurants:
-                f.write(json.dumps(restaurant))
                 result['shopName'].append(restaurant.get('name', ''))
                 result['shopCode'].append(restaurant.get('code', ''))
                 result['budget'].append(restaurant.get('budget', 0))
@@ -139,8 +131,6 @@ def getNearShop(lat, lng, city, loc):
                 result['updateDate'].append(now.strftime("%Y-%m-%d %H:%M:%S"))
                 result['city'].append(restaurant['city'].get('name', ''))
                 result['address'].append(restaurant.get('address', ''))
-                result['addressLine2'].append(
-                    restaurant.get('address_line2', ''))
                 result['latitude'].append(restaurant.get('latitude', 0.0))
                 result['longitude'].append(restaurant.get('longitude', 0.0))
                 result['hasServiceFee'].append(
@@ -148,8 +138,8 @@ def getNearShop(lat, lng, city, loc):
                 result['serviceFeeAmount(%)'].append(
                     restaurant.get('service_fee_percentage_amount', 0))
 
-                categories = [cat['name']
-                              for cat in restaurant.get('cuisines', [])]
+                categories = [
+                    cat['name'] for cat in restaurant.get('cuisines', None)]
                 result['category'].append(categories)
 
                 chain = restaurant['chain'].get(
@@ -164,16 +154,15 @@ def getNearShop(lat, lng, city, loc):
                     restaurant.get('minimum_delivery_time', 0))
                 result["minPickTime"].append(
                     restaurant.get('minimum_pickup_time', 0))
-            f.write(f.read() + ']')
 
-            df = pd.DataFrame.from_dict(result)
+    df = pd.DataFrame.from_dict(result)
 
-            # output path, change this if needed
-            # creat date folder under shoplist if it is not exsist
-            if not os.path.exists(f'{args.outputPath}/{TODAY}'):
-                os.makedirs(f'{args.outputPath}/{TODAY}')
-            df.to_csv(
-                f'{args.outputPath}/{TODAY}/shopLst_{city}_{loc}_{TODAY}.csv')
+    # output path, change this if needed
+    # creat date folder under shoplist if it is not exsist
+    if not os.path.exists(f'{args.outputPath}/{TODAY}'):
+        os.makedirs(f'{args.outputPath}/{TODAY}')
+    df.to_csv(
+        f'{args.outputPath}/{TODAY}/shopLst_{lng}_{lat}_{TODAY}.csv')
 
 
 def concatDF():
@@ -189,7 +178,8 @@ def concatDF():
 
     # read all shopLst_{city}_{loc}_{TODAY}.csv
     for file in dir_list:
-        if (file != '.DS_Store') and (TODAY in file) and ('shopLst_' in file):
+        if (file != '.DS_Store') and (TODAY in file) and\
+                ('shopLst_' in file) and ('json' not in file):
             tmp = pd.read_csv(f'{args.outputPath}/{TODAY}/{file}')
             joinedlist.append(tmp)
 
@@ -209,14 +199,14 @@ if __name__ == '__main__':
     print()
 
     # # get current date
-    TODAY = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    TODAY = str(datetime.now().strftime("%Y-%m-%d"))
     print(TODAY)
 
     # read central location information
     if args.debug:
         centerLst_most = pd.read_csv(
             f'./inputCentral/{args.centerFile}',
-            nrows=3,
+            nrows=20,
         )
     else:
         centerLst_most = pd.read_csv(
@@ -232,8 +222,6 @@ if __name__ == '__main__':
                     getNearShop,
                     centerLst_most['newLat'].to_list(),
                     centerLst_most['newLng'].to_list(),
-                    centerLst_most['City'].to_list(),
-                    centerLst_most['School'].to_list(),
                 )))
     print('shop catch down')
     # concat all the restuarant list, output:
