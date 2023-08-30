@@ -95,11 +95,11 @@ def getMenu(restaurant_code):
         data = data.json()
 
         # write into json file
-        if not os.path.exists(f'{args.outputPath}/menuJson_{TODAY}'):
-            os.makedirs(f'{args.outputPath}/menuJson_{TODAY}')
-        filepath = f'{args.outputPath}/menuJson_{TODAY}/foodpandaMenu_{restaurant_code}.json'
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False)
+        # if not os.path.exists(f'{args.outputPath}/menuJson_{TODAY}'):
+        #     os.makedirs(f'{args.outputPath}/menuJson_{TODAY}')
+        # filepath = f'{args.outputPath}/menuJson_{TODAY}/foodpandaMenu_{restaurant_code}.json'
+        # with open(filepath, 'w', encoding='utf-8') as f:
+        #     json.dump(data, f, ensure_ascii=False)
 
         result['shopCode'] = restaurant_code
         result['Url'] = url
@@ -160,6 +160,8 @@ def getMenu(restaurant_code):
 
         result['discount'] = tmp
         tmp = {
+            'id': [],
+            'code': [],
             'product': [],
             'preDiscountPrice': [],
             'discountedPrice': [],
@@ -169,8 +171,14 @@ def getMenu(restaurant_code):
         try:
             for category in data['data']['menus'][0]['menu_categories']:
                 for product in category['products']:
+                    tmp["id"].append(product["id"])
                     tmp['product'].append(product['name'])
                     tmp['description'].append(product['description'])
+
+                    try:
+                        tmp["code"].append(product["code"])
+                    except:
+                        tmp["code"].append("")
 
                     try:
                         tmp['preDiscountPrice'].append(
