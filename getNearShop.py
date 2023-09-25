@@ -1,22 +1,13 @@
 import os
-# os.system('pip install -r requirements.txt')
-import re
 import requests
 import pandas as pd
-import json
 from datetime import datetime
 import concurrent.futures
 import time
 from random import randint
-import pickle
 from tqdm import tqdm
 import random
-import bs4
-import numpy as np
 import argparse
-from dropbox.exceptions import AuthError
-import pathlib
-import shutil
 
 """pass argument"""
 def parse_args():
@@ -228,7 +219,7 @@ if __name__ == '__main__':
     if args.debug:
         centerLst_most = pd.read_csv(
             f'./inputCentral/{args.centerFile}',
-            nrows=3,
+            nrows=1,
             )
     else:
         centerLst_most = pd.read_csv(
@@ -240,8 +231,8 @@ if __name__ == '__main__':
         ttlResult = list(tqdm(executor.map(getNearShop,
         centerLst_most['newLat'].to_list(),
         centerLst_most['newLng'].to_list(),
-        centerLst_most['City'].to_list(),
-        centerLst_most['School'].to_list(),
+        # centerLst_most['City'].to_list(),
+        # centerLst_most['School'].to_list(),
         )))
     print('shop catch down')
     # concat all the restuarant list, output: 

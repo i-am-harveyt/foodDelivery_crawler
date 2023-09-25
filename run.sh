@@ -1,8 +1,6 @@
 # "${1}"
 date
-python3 --version
-cd /home/b08305056/fromGit/foodDelivery_crawler
-/bin/python3 getNearShop.py --workerNumShop 10 -debug true
-/bin/python3 getMeau.py --workerNumMenu 1 -debug true
-# python3.8 upload.py
-# usr/bin/python3.8 sentOut.py
+cd /home/haotingtong30/foodDelivery_crawler
+/usr/bin/python3 --version
+# /usr/bin/python3 /home/haotingtong30/foodDelivery_crawler/getNearShop.py --workerNumShop
+/usr/bin/python3 /home/haotingtong30/foodDelivery_crawler/getMeau.py --workerNumMenu 1

@@ -41,7 +41,6 @@ def getNearShop(lat, lng):
         'category': [], 'pandaOnly': [], 'minFee': [],
         'minOrder': [], 'minDelTime': [], 'minPickTime': [],
         'distance': [], 'rateNum': [], 'address': [],
-        # 'addressLine2': [],
         'chainCode': [], 'city': [],
         "latitude": [], "longitude": [], "hasServiceFee": [],
         "serviceFeeAmount(%)": [], "updateDate": [],
@@ -123,12 +122,12 @@ def getNearShop(lat, lng):
             for restaurant in restaurants:
 
                 # save to json file
-                if not os.path.exists(f'{args.outputPath}/shop_json'):
-                    os.makedirs(f'{args.outputPath}/shop_json')
-                filepath = f'{args.outputPath}/shop_json/foodpandaShop_{restaurant.get("code", "")}.json'
-                if not os.path.exists(filepath):
-                    with open(filepath, 'w', encoding='utf-8') as f:
-                        json.dump(restaurant, f, ensure_ascii=False)
+                # if not os.path.exists(f'{args.outputPath}/shop_json'):
+                #     os.makedirs(f'{args.outputPath}/shop_json')
+                # filepath = f'{args.outputPath}/shop_json/foodpandaShop_{restaurant.get("code", "")}.json'
+                # if not os.path.exists(filepath):
+                #     with open(filepath, 'w', encoding='utf-8') as f:
+                #         json.dump(restaurant, f, ensure_ascii=False)
 
                 result['shopName'].append(restaurant.get('name', ''))
                 result['shopCode'].append(restaurant.get('code', ''))
@@ -202,12 +201,10 @@ def concatDF():
 
 
 if __name__ == '__main__':
-    '''main'''
-    '''execute time about 2 hours'''
     args = parse_args()
     print()
 
-    # # get current date
+    # get current date
     TODAY = str(datetime.now().strftime("%Y-%m-%d"))
     print(TODAY)
 
