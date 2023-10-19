@@ -163,8 +163,12 @@ def getMenu(restaurant_code):
             'id': [],
             'code': [],
             'product': [],
-            'preDiscountPrice': [],
-            'discountedPrice': [],
+            "variations": {
+                "code": [],
+                "name": [],
+                "preDiscountPrice": [],
+                "discountedPrice": [],
+            },
             'description': []
         }
 
@@ -175,19 +179,21 @@ def getMenu(restaurant_code):
                     tmp['product'].append(product['name'])
                     tmp['description'].append(product['description'])
 
-                    try:
-                        tmp["code"].append(product["code"])
-                    except:
-                        tmp["code"].append("")
+                    tmp["code"].append(product.get("code", ""))
 
-                    try:
-                        tmp['preDiscountPrice'].append(
-                            product['product_variations'][0]['price_before_discount'])
-                    except:
-                        tmp['preDiscountPrice'].append('')
-
-                    tmp['discountedPrice'].append(
-                        product['product_variations'][0]['price'])
+                    for v in product.get("product_variations", []):
+                        tmp['variations']["code"].append(
+                            v.get('code', '')
+                        )
+                        tmp['variations']["name"].append(
+                            v.get('name', '')
+                        )
+                        tmp['variations']["preDiscountPrice"].append(
+                            v.get('price_before_discount', '')
+                        )
+                        tmp['variations']["discountedPrice"].append(
+                            v.get('price', '')
+                        )
         except:
             tmp['product'].append('')
             tmp['preDiscountPrice'].append('')
