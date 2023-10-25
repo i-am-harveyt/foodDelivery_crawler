@@ -196,8 +196,8 @@ def getMenu(restaurant_code):
                         )
         except:
             tmp['product'].append('')
-            tmp['preDiscountPrice'].append('')
-            tmp['discountedPrice'].append('')
+            tmp['variations']['preDiscountPrice'].append('')
+            tmp['variations']['discountedPrice'].append('')
             tmp['description'].append('')
 
         result['menu'] = json.dumps(tmp, ensure_ascii=False)
