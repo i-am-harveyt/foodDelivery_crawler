@@ -169,6 +169,7 @@ def getMenu(restaurant_code):
                 "preDiscountPrice": [],
                 "discountedPrice": [],
             },
+            "tags": [],
             'description': []
         }
 
@@ -194,6 +195,7 @@ def getMenu(restaurant_code):
                         tmp['variations']["discountedPrice"].append(
                             v.get('price', '')
                         )
+                    tmp["tags"].append(product.get("tags", []))
         except:
             tmp['product'].append('')
             tmp['variations']['preDiscountPrice'].append('')
