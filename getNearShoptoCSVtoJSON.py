@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument("--doSleep", type=bool, default=True)
     parser.add_argument("--outputPath", type=str,
                         default='../panda_data/shopLst/')
-    args, unknown = parser.parse_known_args()
+    args, _ = parser.parse_known_args()
     return args
 
 
@@ -42,7 +42,9 @@ def getNearShop(lat, lng):
         'minOrder': [], 'minDelTime': [], 'minPickTime': [],
         'distance': [], 'rateNum': [], 'address': [],
         'chainCode': [], 'city': [],
-        "latitude": [], "longitude": [], "hasServiceFee": [],
+        "latitude": [], "longitude": [],
+        "anchor_latitude": [], "anchor_longitude": [],
+        "hasServiceFee": [],
         "serviceFeeAmount(%)": [], "updateDate": [],
     }
 
@@ -141,6 +143,8 @@ def getNearShop(lat, lng):
                 result['address'].append(restaurant.get('address', ''))
                 result['latitude'].append(restaurant.get('latitude', 0.0))
                 result['longitude'].append(restaurant.get('longitude', 0.0))
+                result['anchor_latitude'].append(lat)
+                result['anchor_longitude'].append(lng)
                 result['hasServiceFee'].append(
                     restaurant.get('is_service_fee_enabled', False))
                 result['serviceFeeAmount(%)'].append(
