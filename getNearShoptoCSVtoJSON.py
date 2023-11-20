@@ -46,6 +46,7 @@ def getNearShop(lat, lng):
         "anchor_latitude": [], "anchor_longitude": [],
         "hasServiceFee": [],
         "serviceFeeAmount(%)": [], "updateDate": [],
+        "tags": [],
     }
 
     query = {
@@ -124,12 +125,12 @@ def getNearShop(lat, lng):
             for restaurant in restaurants:
 
                 # save to json file
-                # if not os.path.exists(f'{args.outputPath}/shop_json'):
-                #     os.makedirs(f'{args.outputPath}/shop_json')
-                # filepath = f'{args.outputPath}/shop_json/foodpandaShop_{restaurant.get("code", "")}.json'
-                # if not os.path.exists(filepath):
-                #     with open(filepath, 'w', encoding='utf-8') as f:
-                #         json.dump(restaurant, f, ensure_ascii=False)
+                if not os.path.exists(f'{args.outputPath}/shop_json'):
+                    os.makedirs(f'{args.outputPath}/shop_json')
+                filepath = f'{args.outputPath}/shop_json/foodpandaShop_{restaurant.get("code", "")}.json'
+                if not os.path.exists(filepath):
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        json.dump(restaurant, f, ensure_ascii=False)
 
                 result['shopName'].append(restaurant.get('name', ''))
                 result['shopCode'].append(restaurant.get('code', ''))
@@ -166,6 +167,10 @@ def getNearShop(lat, lng):
                     restaurant.get('minimum_delivery_time', 0))
                 result["minPickTime"].append(
                     restaurant.get('minimum_pickup_time', 0))
+
+                result["tags"].append(
+                    json.dumps(restaurant.get("tags", []), ensure_ascii=False)
+                )
 
     df = pd.DataFrame.from_dict(result)
 
