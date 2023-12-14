@@ -17,7 +17,7 @@ def parse_args():
     # ------------------------>
     parser.add_argument("--centerFile", type=str, default='tw_points.csv',)
     parser.add_argument("--debug", type=bool, default=False)
-    parser.add_argument("--workerNumShop", type=int, default=5)
+    parser.add_argument("--workerNumShop", type=int, default=1)
     parser.add_argument("--doSleep", type=bool, default=True)
     parser.add_argument("--outputPath", type=str,
                         default='../panda_data/shopLst/')
@@ -125,12 +125,12 @@ def getNearShop(lat, lng):
             for restaurant in restaurants:
 
                 # save to json file
-                if not os.path.exists(f'{args.outputPath}/shop_json'):
-                    os.makedirs(f'{args.outputPath}/shop_json')
-                filepath = f'{args.outputPath}/shop_json/foodpandaShop_{restaurant.get("code", "")}.json'
-                if not os.path.exists(filepath):
-                    with open(filepath, 'w', encoding='utf-8') as f:
-                        json.dump(restaurant, f, ensure_ascii=False)
+                # if not os.path.exists(f'{args.outputPath}/shop_json'):
+                #     os.makedirs(f'{args.outputPath}/shop_json')
+                # filepath = f'{args.outputPath}/shop_json/foodpandaShop_{restaurant.get("code", "")}.json'
+                # if not os.path.exists(filepath):
+                #     with open(filepath, 'w', encoding='utf-8') as f:
+                #         json.dump(restaurant, f, ensure_ascii=False)
 
                 result['shopName'].append(restaurant.get('name', ''))
                 result['shopCode'].append(restaurant.get('code', ''))
@@ -171,6 +171,8 @@ def getNearShop(lat, lng):
                 result["tags"].append(
                     json.dumps(restaurant.get("tags", []), ensure_ascii=False)
                 )
+    else:
+        print(f"\n{lat}, {lng} not ok")
 
     df = pd.DataFrame.from_dict(result)
 
@@ -178,6 +180,7 @@ def getNearShop(lat, lng):
     # creat date folder under shoplist if it is not exsist
     if not os.path.exists(f'{args.outputPath}/{TODAY}'):
         os.makedirs(f'{args.outputPath}/{TODAY}')
+    print(f"\nnum of ({lat}, {lng}): {df.shape[0]}")
     df.to_csv(
         f'{args.outputPath}/{TODAY}/shopLst_{lng}_{lat}_{TODAY}.csv')
 
@@ -227,6 +230,10 @@ if __name__ == '__main__':
         centerLst_most = pd.read_csv(
             f'./inputCentral/{args.centerFile}',
         )
+
+    if args.debug:
+        getNearShop(lat=24.98763, lng=121.57615)
+        exit()
 
     # get shop data around center point
     with concurrent.futures.ThreadPoolExecutor(
