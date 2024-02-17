@@ -4,7 +4,6 @@ import pandas as pd
 from datetime import datetime
 import concurrent.futures
 import time
-from random import randint
 from tqdm import tqdm
 import random
 import argparse
@@ -63,7 +62,7 @@ def getNearShop(lat, lng):
         'food_characteristic': '',
         'use_free_delivery_label': False,
         'vertical': 'restaurants',
-        'limit': 48,
+        'limit': 30,
         'offset': 0,
         'customer_type': 'regular'
     }
@@ -71,10 +70,7 @@ def getNearShop(lat, lng):
         'x-disco-client-id': 'web',
     }
     # need sleep between request to prevent error 429
-    if args.doSleep:
-        if bool(random.choices([1, 0], [1, 9])):  # 90% not sleep, 10% sleep
-            # randomly sleep 0.5~1.5s, the minium requirement
-            time.sleep(random.uniform(0.5, 1.5))
+    time.sleep(random.uniform(3, 4))
 
     res = requests.get(url=URL, params=query, headers=headers)
 
@@ -83,9 +79,11 @@ def getNearShop(lat, lng):
 
         # get total number of restaurants = datalen
         datalen = data['data']['available_count']
+        print(f"({lat}, {lng}) available: {datalen}")
         restaurants = data['data']['items']
 
-        for i in range(0, datalen, 100):
+        PAGE_SIZE = 50
+        for i in range(0, datalen, PAGE_SIZE):
             query = {
                 'longitude': lng,
                 'latitude': lat,
@@ -100,7 +98,7 @@ def getNearShop(lat, lng):
                 'food_characteristic': '',
                 'use_free_delivery_label': False,
                 'vertical': 'restaurants',
-                'limit': datalen,
+                'limit': PAGE_SIZE,
                 'offset': i,
                 'customer_type': 'regular'
             }
@@ -109,12 +107,8 @@ def getNearShop(lat, lng):
             }
             res = requests.get(url=URL, params=query, headers=headers)
 
-            if i % 10 == 0:
-                time.sleep(3)
-                print('sleeping at', i)
-            elif i % 5 == 0:
-                time.sleep(randint(0, 4))
-                print('sleeping at', i)
+            time.sleep(3 + random.random())
+            print('sleeping at', i)
 
             if res.status_code != requests.codes.ok:
                 print('faill to request')
@@ -214,7 +208,6 @@ def concatDF():
 
 if __name__ == '__main__':
     args = parse_args()
-    print()
 
     # get current date
     TODAY = str(datetime.now().strftime("%Y-%m-%d"))
@@ -232,7 +225,7 @@ if __name__ == '__main__':
         )
 
     if args.debug:
-        getNearShop(lat=24.98763, lng=121.57615)
+        getNearShop(lat=24.9876, lng=121.57606)
         exit()
 
     # get shop data around center point
