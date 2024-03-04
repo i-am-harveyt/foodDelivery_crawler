@@ -12,6 +12,7 @@ import requests
 from tqdm import tqdm
 
 availabes_df = pd.DataFrame({"lat": [], "lng": [], "available": [], "fetched": []})
+redo_locations = []
 TODAY = str(datetime.now().strftime("%Y-%m-%d"))
 
 
@@ -95,6 +96,7 @@ def get_near_shop(lat, lng, today):
 
     if res.status_code != requests.codes.ok:
         print(f"\n{lat}, {lng} not ok\n===")
+        redo_locations.append((lat, lng))
         return
     data = res.json()
 
@@ -131,6 +133,7 @@ def get_near_shop(lat, lng, today):
         time.sleep(1 + random.random())
 
         if res.status_code != requests.codes.ok:
+            redo_locations.append((lat, lng))
             print("fail to request")
             print(res.text)
             break
@@ -268,6 +271,12 @@ if __name__ == "__main__":
                 )
             )
         )
+    
+    print(f"Length of Redos: {len(redo_locations)}")
+    if len(redo_locations) > 0:
+        for location in redo_locations:
+            print(f"Redo... {location}")
+            get_near_shop(location[0], location[1], TODAY)
     print("shop catch down")
     # concat all the restuarant list, output:
     shopData = concat_df(TODAY)
