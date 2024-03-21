@@ -33,7 +33,7 @@ def parse_args():
     return args
 
 
-def getMenu(restaurant_code):
+def getMenu(restaurant_code, anchor_lat, anchor_lng):
     """
     get menu from restaurant_code
     """
@@ -57,8 +57,8 @@ def getMenu(restaurant_code):
         "language_id": 6,
         "opening_type": 'delivery',
         'basket_currency': 'TWD',
-        'latitude': 24.98763,
-        'longitude': 121.57615,
+        'latitude': anchor_lat,
+        'longitude': anchor_lng,
     }
 
     def get_data():
@@ -279,7 +279,9 @@ if __name__ == '__main__':
                         tqdm(
                             executor.map(
                                 getMenu,
-                                shopLst_most['shopCode'].to_list()
+                                shopLst_most['shopCode'].to_list(),
+                                shopLst_most["anchor_latitude"].to_list(),
+                                shopLst_most["anchor_longitude"].to_list(),
                             ),
                             total=len(shopLst_most['shopCode'].to_list())
                         )
