@@ -10,6 +10,7 @@ import bs4
 import numpy as np
 import argparse
 import json
+from fake_useragent import UserAgent
 
 """pass argument"""
 
@@ -39,16 +40,25 @@ def getMenu(restaurant_code):
     currentTime = datetime.now()
     result = {}
 
+    ua = UserAgent()
+
     # data need for request
     url = f'https://tw.fd-api.com/api/v5/vendors/{restaurant_code}'
-    query = {
-        'include': 'menus',
-        'language_id': '6',
-        'dynamic_pricing': '0',
-        'opening_type': 'delivery',
-    }
     headers = {
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9",
         'Connection': 'keep-alive',
+        "User-Agent": ua.random,
+        "Referer": "https://www.foodpanda.com.tw",
+        "X-Fp-Api-Key": "volo",
+    }
+    query = {
+        "include": "menus,bundles,multiple_discounts",
+        "language_id": 6,
+        "opening_type": 'delivery',
+        'basket_currency': 'TWD',
+        'latitude': 24.98763,
+        'longitude': 121.57615,
     }
 
     def get_data():
