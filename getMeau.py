@@ -26,7 +26,7 @@ def parse_args():
                         default='../panda_data/panda_menu')
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
-    parser.add_argument("--workerNumMenu", type=int, default=10)
+    parser.add_argument("--workerNumMenu", type=int, default=1)
     parser.add_argument("--doSleep", type=bool, default=True)
     parser.add_argument("--reTryNum", type=int, default=5)
     args, unknown = parser.parse_known_args()
@@ -57,8 +57,8 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
         "language_id": 6,
         "opening_type": 'delivery',
         'basket_currency': 'TWD',
-        'latitude': anchor_lat,
-        'longitude': anchor_lng,
+        # 'latitude': anchor_lat,
+        # 'longitude': anchor_lng,
     }
 
     def get_data():
