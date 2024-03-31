@@ -1,29 +1,33 @@
-import os
-import requests
-import pandas as pd
-from datetime import datetime
+import argparse
 import concurrent.futures
-import time
-from tqdm import tqdm
+import json
+import os
 import random
+import time
+from datetime import datetime
+
 import bs4
 import numpy as np
-import argparse
-import json
+import pandas as pd
+import requests
 from fake_useragent import UserAgent
+from tqdm import tqdm
 
 """pass argument"""
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Finetune a transformers model on a summarization task")
+        description="Finetune a transformers model on a summarization task"
+    )
     # ------------------------>
     # parser.add_argument("--center_type", type=str, default='most',)
-    parser.add_argument("--shopLstPath", type=str,
-                        default='../panda_data/shopLst',)
-    parser.add_argument("--outputPath", type=str,
-                        default='../panda_data/panda_menu')
+    parser.add_argument(
+        "--shopLstPath",
+        type=str,
+        default="../panda_data/shopLst",
+    )
+    parser.add_argument("--outputPath", type=str, default="../panda_data/panda_menu")
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
     parser.add_argument("--workerNumMenu", type=int, default=1)
@@ -43,22 +47,41 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
     ua = UserAgent()
 
     # data need for request
-    url = f'https://tw.fd-api.com/api/v5/vendors/{restaurant_code}'
+    url = f"https://tw.fd-api.com/api/v5/vendors/{restaurant_code}"
     headers = {
-        "accept": "application/json, text/plain, */*",
+        "accept": "".join(
+            [
+                "text/html,application/xhtml+xml,application/xml;",
+                "q=0.9,image/avif,image/webp,image/apng,*/*;",
+                "q=0.8,application/signed-exchange;v=b3;q=0.7",
+            ]
+        ),
         "accept-language": "en-US,en;q=0.9",
-        'Connection': 'keep-alive',
-        "User-Agent": ua.random,
-        "Referer": "https://www.foodpanda.com.tw",
-        "X-Fp-Api-Key": "volo",
+        "cache-control": "max-age=0",
+        "dnt": "1",
+        "sec-ch-ua": '"Chromium";v="123", "Not:A-Brand";v="8"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"macOS"',
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "none",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
+        "user-agent": " ".join(
+            [
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+                "AppleWebKit/537.36 (KHTML, like Gecko)",
+                "Chrome/123.0.0.0 Safari/537.36",
+            ]
+        ),
     }
     query = {
         "include": "menus,bundles,multiple_discounts",
         "language_id": 6,
-        "opening_type": 'delivery',
-        'basket_currency': 'TWD',
-        # 'latitude': anchor_lat,
-        # 'longitude': anchor_lng,
+        "opening_type": "delivery",
+        "basket_currency": "TWD",
+        # "latitude": anchor_lat,
+        # "longitude": anchor_lng,
     }
 
     def get_data():
@@ -79,7 +102,7 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
             get_data()
 
         if data.status_code == 429:
-            print('$429$, sleep')
+            print("$429$, sleep")
             sleep_randomly(30, 60)
             get_data()
     except:
@@ -98,7 +121,7 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
             # try again
             get_data()
         except:
-            failDict['shopCode'].append(restaurant_code)
+            failDict["shopCode"].append(restaurant_code)
             return result
     # if status code is ok, then get the data
     if data.status_code == requests.codes.ok:
@@ -111,68 +134,59 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
         # with open(filepath, 'w', encoding='utf-8') as f:
         #     json.dump(data, f, ensure_ascii=False)
 
-        result['shopCode'] = restaurant_code
-        result['Url'] = url
-        result['address'] = data['data']['address']
-        result['location'] = \
-            [data['data']['latitude'], data['data']['longitude']]
-        result['rate'] = data['data']['rating']
-        result['updateDate'] = currentTime.strftime('%Y-%m-%d %H:%M:%S')
-        result['pickup'] = 1 if data['data']['is_pickup_enabled'] else 0
+        result["shopCode"] = restaurant_code
+        result["Url"] = url
+        result["address"] = data["data"]["address"]
+        result["location"] = [data["data"]["latitude"], data["data"]["longitude"]]
+        result["rate"] = data["data"]["rating"]
+        result["updateDate"] = currentTime.strftime("%Y-%m-%d %H:%M:%S")
+        result["pickup"] = 1 if data["data"]["is_pickup_enabled"] else 0
 
         # get platform service fee
         # I'm not very sure about the meanings respectively,
         # so I fetch 'em all
         try:
-            result["service_fee_total"] = data[
-                "data"][
-                "dynamic_pricing"][
-                "service_fee"][
-                "total"]
+            result["service_fee_total"] = data["data"]["service_fee"]
         except:
             result["service_fee_total"] = 0
         try:
-            result["service_fee_type"] = data[
-                "data"][
-                "dynamic_pricing"][
-                "service_fee"][
-                "type"]
+            result["service_fee_type"] = data["data"]["dynamic_pricing"]["service_fee"][
+                "type"
+            ]
         except:
             result["service_fee_type"] = np.NaN
         try:
-            result["service_fee_setup_value"] = data[
-                "data"][
-                "dynamic_pricing"][
-                "service_fee"][
-                "setup_value"]
+            result["service_fee_setup_value"] = data["data"]["dynamic_pricing"][
+                "service_fee"
+            ]["setup_value"]
         except:
             result["service_fee_setup_value"] = np.NaN
 
         tmpInshop = 0
         tmp = []
 
-        for item in data['data']['food_characteristics']:
-            if '店內價' in item['name']:
+        for item in data["data"]["food_characteristics"]:
+            if "店內價" in item["name"]:
                 tmpInshop = 1
             else:
                 try:
-                    tmp.append(item['name'])
+                    tmp.append(item["name"])
                 except:
                     pass
 
-        result['inShopPrice'] = tmpInshop
-        result['shopTag'] = tmp
+        result["inShopPrice"] = tmpInshop
+        result["shopTag"] = tmp
 
         tmp = []
 
-        for discount in data['data']['discounts']:
-            tmp.append(discount['name'])
+        for discount in data["data"]["discounts"]:
+            tmp.append(discount["name"])
 
-        result['discount'] = tmp
+        result["discount"] = tmp
         tmp = {
-            'id': [],
-            'code': [],
-            'product': [],
+            "id": [],
+            "code": [],
+            "product": [],
             "variations": {
                 "code": [],
                 "name": [],
@@ -180,51 +194,45 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
                 "discountedPrice": [],
             },
             "tags": [],
-            'description': []
+            "description": [],
         }
 
         try:
-            for category in data['data']['menus'][0]['menu_categories']:
-                for product in category['products']:
+            for category in data["data"]["menus"][0]["menu_categories"]:
+                for product in category["products"]:
                     tmp["id"].append(product["id"])
-                    tmp['product'].append(product['name'])
-                    tmp['description'].append(product['description'])
+                    tmp["product"].append(product["name"])
+                    tmp["description"].append(product["description"])
 
                     tmp["code"].append(product.get("code", ""))
 
                     for v in product.get("product_variations", []):
-                        tmp['variations']["code"].append(
-                            v.get('code', '')
+                        tmp["variations"]["code"].append(v.get("code", ""))
+                        tmp["variations"]["name"].append(v.get("name", ""))
+                        tmp["variations"]["preDiscountPrice"].append(
+                            v.get("price_before_discount", "")
                         )
-                        tmp['variations']["name"].append(
-                            v.get('name', '')
-                        )
-                        tmp['variations']["preDiscountPrice"].append(
-                            v.get('price_before_discount', '')
-                        )
-                        tmp['variations']["discountedPrice"].append(
-                            v.get('price', '')
-                        )
+                        tmp["variations"]["discountedPrice"].append(v.get("price", ""))
                     tmp["tags"].append(product.get("tags", []))
         except:
-            tmp['product'].append('')
-            tmp['variations']['preDiscountPrice'].append('')
-            tmp['variations']['discountedPrice'].append('')
-            tmp['description'].append('')
+            tmp["product"].append("")
+            tmp["variations"]["preDiscountPrice"].append("")
+            tmp["variations"]["discountedPrice"].append("")
+            tmp["description"].append("")
 
-        result['menu'] = json.dumps(tmp, ensure_ascii=False)
+        result["menu"] = json.dumps(tmp, ensure_ascii=False)
     else:
         try:
             data = data.json()
-            result['shopCode'] = restaurant_code
-            result['Url'] = url
-            result['error'] = data['data']['error']
-            result['updateDate'] = currentTime
-            result['menu'] = ""
-            result['address'] = ""
-            result['location'] = ""
-            result['rate'] = np.NaN
-            result['pickup'] = np.NaN
+            result["shopCode"] = restaurant_code
+            result["Url"] = url
+            result["error"] = data["data"]["error"]
+            result["updateDate"] = currentTime
+            result["menu"] = ""
+            result["address"] = ""
+            result["location"] = ""
+            result["rate"] = np.NaN
+            result["pickup"] = np.NaN
             result["service_fee_total"] = np.NaN
             result["service_fee_type"] = np.NaN
             result["service_fee_setup_value"] = np.NaN
@@ -232,35 +240,36 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
             pass
 
     if len(result) == 0:
-        print('error code: ', data.status_code)
+        print("error code: ", data.status_code)
 
     return result
 
 
-if __name__ == '__main__':
-    '''
+if __name__ == "__main__":
+    """
     main
     execute time about 2 hours
-    '''
+    """
     args = parse_args()
     # check whether path exist
-    if not os.path.exists(f'{args.outputPath}/'):
-        os.makedirs(f'{args.outputPath}')
+    if not os.path.exists(f"{args.outputPath}/"):
+        os.makedirs(f"{args.outputPath}")
 
     failDict = {}  # record the fail shop code
-    failDict['shopCode'] = []
+    failDict["shopCode"] = []
 
     # # get current date
     TODAY = str(datetime.now().strftime("%Y-%m-%d"))
     # TODAY = '2023-06-24'
-    print('start get menu')
+    print("start get menu")
 
     # read the restuarant list file
     if args.debug:
         shopLst_most = pd.read_csv(
-            f'{args.shopLstPath}/all_most_{TODAY}.csv', nrows=100)
+            f"{args.shopLstPath}/all_most_{TODAY}.csv", nrows=100
+        )
     else:
-        shopLst_most = pd.read_csv(f'{args.shopLstPath}/all_most_{TODAY}.csv')
+        shopLst_most = pd.read_csv(f"{args.shopLstPath}/all_most_{TODAY}.csv")
 
     """
     get menu data
@@ -271,44 +280,43 @@ if __name__ == '__main__':
     for i in range(args.reTryNum):
         print(f"{i+1} round get menu")
 
-        if (i == 0):
+        if i == 0:
             with concurrent.futures.ThreadPoolExecutor(
-                    max_workers=args.workerNumMenu) as executor:
-                ttlResult = \
-                    list(
-                        tqdm(
-                            executor.map(
-                                getMenu,
-                                shopLst_most['shopCode'].to_list(),
-                                shopLst_most["anchor_latitude"].to_list(),
-                                shopLst_most["anchor_longitude"].to_list(),
-                            ),
-                            total=len(shopLst_most['shopCode'].to_list())
-                        )
+                max_workers=args.workerNumMenu
+            ) as executor:
+                ttlResult = list(
+                    tqdm(
+                        executor.map(
+                            getMenu,
+                            shopLst_most["shopCode"].to_list(),
+                            shopLst_most["anchor_latitude"].to_list(),
+                            shopLst_most["anchor_longitude"].to_list(),
+                        ),
+                        total=len(shopLst_most["shopCode"].to_list()),
                     )
+                )
         else:
-            if len(failDict['shopCode']) == 0:
-                print('no shop code fail')
+            if len(failDict["shopCode"]) == 0:
+                print("no shop code fail")
                 break
             else:
                 with concurrent.futures.ThreadPoolExecutor(
-                        max_workers=args.workerNumMenu) as executor:
-                    failTtlResult = \
-                        list(
-                            tqdm(
-                                executor.map(
-                                    getMenu, failDict['shopCode']),
-                                total=len(failDict['shopCode'])
-                            )
+                    max_workers=args.workerNumMenu
+                ) as executor:
+                    failTtlResult = list(
+                        tqdm(
+                            executor.map(getMenu, failDict["shopCode"]),
+                            total=len(failDict["shopCode"]),
                         )
+                    )
                 # add the fail result ttlResult
                 ttlResult.extend(failTtlResult)
         # conver result to data frame
         df = pd.DataFrame(ttlResult)
-        print('number of shop did not catch data: ', df.isnull().sum())
+        print("number of shop did not catch data: ", df.isnull().sum())
         try:
-            df.to_csv(f'{args.outputPath}/foodpandaMenu_{TODAY}.csv')
-            print(f'save {{args.outputPath}}/foodpandaMenu_{TODAY}.csv')
+            df.to_csv(f"{args.outputPath}/foodpandaMenu_{TODAY}.csv")
+            print(f"save {{args.outputPath}}/foodpandaMenu_{TODAY}.csv")
         except:
-            df.to_csv(f'foodpandaMenu_{TODAY}.csv')
-            print(f'save foodpandaMenu_{TODAY}.csv')
+            df.to_csv(f"foodpandaMenu_{TODAY}.csv")
+            print(f"save foodpandaMenu_{TODAY}.csv")

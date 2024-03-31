@@ -11,13 +11,15 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-availabes_df = pd.DataFrame({"lat": [], "lng": [], "available": [], "fetched": []})
+availabes_df = pd.DataFrame(
+    {"lat": [], "lng": [], "available": [], "fetched": []})
 redo_locations = []
 TODAY = str(datetime.now().strftime("%Y-%m-%d"))
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="get shop list from specific location")
+    parser = argparse.ArgumentParser(
+        description="get shop list from specific location")
     # ------------------------>
     parser.add_argument(
         "--centerFile",
@@ -27,7 +29,8 @@ def parse_args():
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=1)
     parser.add_argument("--doSleep", type=bool, default=True)
-    parser.add_argument("--outputPath", type=str, default="../panda_data/shopLst/")
+    parser.add_argument("--outputPath", type=str,
+                        default="../panda_data/shopLst/")
     args, _ = parser.parse_known_args()
     return args
 
@@ -159,7 +162,8 @@ def get_near_shop(lat, lng, today):
             result["shopCode"].append(restaurant.get("code", ""))
             result["budget"].append(restaurant.get("budget", 0))
             result["distance"].append(restaurant.get("distance", 0.0))
-            result["pandaOnly"].append(restaurant.get("is_best_in_city", False))
+            result["pandaOnly"].append(
+                restaurant.get("is_best_in_city", False))
             result["rateNum"].append(restaurant.get("review_number", 0))
             result["updateDate"].append(now.strftime("%Y-%m-%d %H:%M:%S"))
             result["city"].append(restaurant["city"].get("name", ""))
@@ -175,7 +179,8 @@ def get_near_shop(lat, lng, today):
                 restaurant.get("service_fee_percentage_amount", 0)
             )
 
-            categories = [cat["name"] for cat in restaurant.get("cuisines", None)]
+            categories = [cat["name"]
+                          for cat in restaurant.get("cuisines", None)]
             result["category"].append(categories)
 
             chain = (
@@ -186,9 +191,12 @@ def get_near_shop(lat, lng, today):
             result["chainCode"].append(chain)
 
             result["minFee"].append(restaurant.get("minimum_delivery_fee", 0))
-            result["minOrder"].append(restaurant.get("minimum_order_amount", 0))
-            result["minDelTime"].append(restaurant.get("minimum_delivery_time", 0))
-            result["minPickTime"].append(restaurant.get("minimum_pickup_time", 0))
+            result["minOrder"].append(
+                restaurant.get("minimum_order_amount", 0))
+            result["minDelTime"].append(
+                restaurant.get("minimum_delivery_time", 0))
+            result["minPickTime"].append(
+                restaurant.get("minimum_pickup_time", 0))
 
             result["tags"].append(
                 json.dumps(restaurant.get("tags", []), ensure_ascii=False)
@@ -250,6 +258,14 @@ if __name__ == "__main__":
     print(f"DEBUG_MODE={args.debug}")
     if args.debug:
         get_near_shop(lat=24.98763, lng=121.57615, today=TODAY)
+        shopData = concat_df(TODAY)
+
+        pd.DataFrame(data=available_counts).to_csv(
+            f"{args.outputPath}/{TODAY}/availableCounts.csv"
+        )
+
+        print("number of resuarant in total: ", len(shopData))
+        availabes_df.to_csv(f"{args.outputPath}/{TODAY}/available_counts.csv")
         sys.exit()
 
     # read central location information
@@ -271,7 +287,7 @@ if __name__ == "__main__":
                 )
             )
         )
-    
+
     print(f"Length of Redos: {len(redo_locations)}")
     if len(redo_locations) > 0:
         for location in redo_locations:
