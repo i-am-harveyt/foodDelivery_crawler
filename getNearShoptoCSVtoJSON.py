@@ -95,7 +95,12 @@ def get_near_shop(lat, lng, today):
     # need sleep between request to prevent error 429
     time.sleep(random.uniform(3, 4))
 
-    res = requests.get(url=URL, params=query, headers=headers)
+    try:
+        res = requests.get(url=URL, params=query, headers=headers)
+    except:
+        print(f"\n{lat}, {lng} not ok\n===")
+        redo_locations.append((lat, lng))
+        return
 
     if res.status_code != requests.codes.ok:
         print(f"\n{lat}, {lng} not ok\n===")
@@ -131,9 +136,14 @@ def get_near_shop(lat, lng, today):
         headers = {
             "x-disco-client-id": "web",
         }
-        res = requests.get(url=URL, params=query, headers=headers)
+        try:
+            res = requests.get(url=URL, params=query, headers=headers)
+        except:
+            print(f"\n{lat}, {lng} not ok\n===")
+            redo_locations.append((lat, lng))
+            return
 
-        time.sleep(1 + random.random())
+        time.sleep(3 + random.random())
 
         if res.status_code != requests.codes.ok:
             redo_locations.append((lat, lng))
