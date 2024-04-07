@@ -241,6 +241,7 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
 
     if len(result) == 0:
         print("error code: ", data.status_code)
+        failDict["shopCode"].append(restaurant_code)
 
     return result
 
@@ -299,18 +300,17 @@ if __name__ == "__main__":
             if len(failDict["shopCode"]) == 0:
                 print("no shop code fail")
                 break
-            else:
-                with concurrent.futures.ThreadPoolExecutor(
-                    max_workers=args.workerNumMenu
-                ) as executor:
-                    failTtlResult = list(
-                        tqdm(
-                            executor.map(getMenu, failDict["shopCode"]),
-                            total=len(failDict["shopCode"]),
-                        )
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=args.workerNumMenu
+            ) as executor:
+                failTtlResult = list(
+                    tqdm(
+                        executor.map(getMenu, failDict["shopCode"]),
+                        total=len(failDict["shopCode"]),
                     )
-                # add the fail result ttlResult
-                ttlResult.extend(failTtlResult)
+                )
+            # add the fail result ttlResult
+            ttlResult.extend(failTtlResult)
         # conver result to data frame
         df = pd.DataFrame(ttlResult)
         print("number of shop did not catch data: ", df.isnull().sum())
