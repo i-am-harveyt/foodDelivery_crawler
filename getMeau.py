@@ -5,7 +5,6 @@ import os
 import random
 import time
 from datetime import datetime
-
 import bs4
 import numpy as np
 import pandas as pd
@@ -27,7 +26,8 @@ def parse_args():
         type=str,
         default="../panda_data/shopLst",
     )
-    parser.add_argument("--outputPath", type=str, default="../panda_data/panda_menu")
+    parser.add_argument("--outputPath", type=str,
+                        default="../panda_data/panda_menu")
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
     parser.add_argument("--workerNumMenu", type=int, default=1)
@@ -137,7 +137,8 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
         result["shopCode"] = restaurant_code
         result["Url"] = url
         result["address"] = data["data"]["address"]
-        result["location"] = [data["data"]["latitude"], data["data"]["longitude"]]
+        result["location"] = [data["data"]
+                              ["latitude"], data["data"]["longitude"]]
         result["rate"] = data["data"]["rating"]
         result["updateDate"] = currentTime.strftime("%Y-%m-%d %H:%M:%S")
         result["pickup"] = 1 if data["data"]["is_pickup_enabled"] else 0
@@ -212,7 +213,8 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
                         tmp["variations"]["preDiscountPrice"].append(
                             v.get("price_before_discount", "")
                         )
-                        tmp["variations"]["discountedPrice"].append(v.get("price", ""))
+                        tmp["variations"]["discountedPrice"].append(
+                            v.get("price", ""))
                     tmp["tags"].append(product.get("tags", []))
         except:
             tmp["product"].append("")
@@ -300,17 +302,17 @@ if __name__ == "__main__":
             if len(failDict["shopCode"]) == 0:
                 print("no shop code fail")
                 break
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=args.workerNumMenu
-            ) as executor:
-                failTtlResult = list(
-                    tqdm(
-                        executor.map(getMenu, failDict["shopCode"]),
-                        total=len(failDict["shopCode"]),
-                    )
-                )
-            # add the fail result ttlResult
-            ttlResult.extend(failTtlResult)
+            # with concurrent.futures.ThreadPoolExecutor(
+            #     max_workers=args.workerNumMenu
+            # ) as executor:
+            #     failTtlResult = list(
+            #         tqdm(
+            #             executor.map(getMenu, failDict["shopCode"]),
+            #             total=len(failDict["shopCode"]),
+            #         )
+            #     )
+            # # add the fail result ttlResult
+            # ttlResult.extend(failTtlResult)
         # conver result to data frame
         df = pd.DataFrame(ttlResult)
         print("number of shop did not catch data: ", df.isnull().sum())
