@@ -5,6 +5,7 @@ import os
 import random
 import time
 from datetime import datetime
+
 import bs4
 import numpy as np
 import pandas as pd
@@ -26,8 +27,7 @@ def parse_args():
         type=str,
         default="../panda_data/shopLst",
     )
-    parser.add_argument("--outputPath", type=str,
-                        default="../panda_data/panda_menu")
+    parser.add_argument("--outputPath", type=str, default="../panda_data/panda_menu")
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=10)
     parser.add_argument("--workerNumMenu", type=int, default=1)
@@ -49,32 +49,14 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
     # data need for request
     url = f"https://tw.fd-api.com/api/v5/vendors/{restaurant_code}"
     headers = {
-        "accept": "".join(
-            [
-                "text/html,application/xhtml+xml,application/xml;",
-                "q=0.9,image/avif,image/webp,image/apng,*/*;",
-                "q=0.8,application/signed-exchange;v=b3;q=0.7",
-            ]
-        ),
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "max-age=0",
-        "dnt": "1",
-        "sec-ch-ua": '"Chromium";v="123", "Not:A-Brand";v="8"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "none",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1",
-        "user-agent": " ".join(
-            [
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-                "AppleWebKit/537.36 (KHTML, like Gecko)",
-                "Chrome/123.0.0.0 Safari/537.36",
-            ]
-        ),
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
+        "Accept": "*/*",
+        "Accept-Language": "zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "cross-site",
     }
+
     query = {
         "include": "menus,bundles,multiple_discounts",
         "language_id": 6,
@@ -137,8 +119,7 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
         result["shopCode"] = restaurant_code
         result["Url"] = url
         result["address"] = data["data"]["address"]
-        result["location"] = [data["data"]
-                              ["latitude"], data["data"]["longitude"]]
+        result["location"] = [data["data"]["latitude"], data["data"]["longitude"]]
         result["rate"] = data["data"]["rating"]
         result["updateDate"] = currentTime.strftime("%Y-%m-%d %H:%M:%S")
         result["pickup"] = 1 if data["data"]["is_pickup_enabled"] else 0
@@ -213,8 +194,7 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
                         tmp["variations"]["preDiscountPrice"].append(
                             v.get("price_before_discount", "")
                         )
-                        tmp["variations"]["discountedPrice"].append(
-                            v.get("price", ""))
+                        tmp["variations"]["discountedPrice"].append(v.get("price", ""))
                     tmp["tags"].append(product.get("tags", []))
         except:
             tmp["product"].append("")
