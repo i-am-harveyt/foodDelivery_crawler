@@ -44,12 +44,13 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
     currentTime = datetime.now()
     result = {}
 
-    ua = UserAgent()
+    ua = UserAgent(os="linux")
+    firefox = ua.getFirefox
 
     # data need for request
     url = f"https://tw.fd-api.com/api/v5/vendors/{restaurant_code}"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
+        "User-Agent": firefox["useragent"],
         "Accept": "*/*",
         "Accept-Language": "zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3",
         "Sec-Fetch-Dest": "empty",
@@ -62,8 +63,8 @@ def getMenu(restaurant_code, anchor_lat, anchor_lng):
         "language_id": 6,
         "opening_type": "delivery",
         "basket_currency": "TWD",
-        # "latitude": anchor_lat,
-        # "longitude": anchor_lng,
+        "latitude": anchor_lat,
+        "longitude": anchor_lng,
     }
 
     def get_data():
