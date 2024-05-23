@@ -207,12 +207,15 @@ def get_near_shop(lat, lng, today):
                 json.dumps(restaurant.get("tags", []), ensure_ascii=False)
             )
     df = pd.DataFrame.from_dict(result)
-    availabes_df.loc[availabes_df.shape[0]] = {
-        "lat": lat,
-        "lng": lng,
-        "available": datalen,
-        "fetched": df.shape[0],
-    }
+    try:
+        availabes_df.loc[availabes_df.shape[0]] = {
+            "lat": lat,
+            "lng": lng,
+            "available": datalen,
+            "fetched": df.shape[0],
+        }
+    except Exception as e:
+        print(e)
 
     # output path, change this if needed
     # creat date folder under shoplist if it is not exsist
