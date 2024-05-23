@@ -151,12 +151,12 @@ def get_near_shop(lat, lng, today):
         data = res.json()
 
         # save to json file
-        if not os.path.exists(f"{args.outputPath}/shop_json"):
-            os.makedirs(f"{args.outputPath}/shop_json")
-        filepath = f'{args.outputPath}/shop_json/foodpandaShop_{lat}_{lng}-{offset}-{TODAY}.json'
-        if not os.path.exists(filepath):
-            with open(filepath, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False)
+        # if not os.path.exists(f"{args.outputPath}/shop_json"):
+        #     os.makedirs(f"{args.outputPath}/shop_json")
+        # filepath = f'{args.outputPath}/shop_json/foodpandaShop_{lat}_{lng}-{offset}-{TODAY}.json'
+        # if not os.path.exists(filepath):
+        #     with open(filepath, "w", encoding="utf-8") as f:
+        #         json.dump(data, f, ensure_ascii=False)
 
         restaurants = data["data"]["items"]
         if len(restaurants) == 0:
