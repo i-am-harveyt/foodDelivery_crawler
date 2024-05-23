@@ -11,15 +11,13 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-availabes_df = pd.DataFrame(
-    {"lat": [], "lng": [], "available": [], "fetched": []})
+availabes_df = pd.DataFrame({"lat": [], "lng": [], "available": [], "fetched": []})
 redo_locations = []
 TODAY = str(datetime.now().strftime("%Y-%m-%d"))
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="get shop list from specific location")
+    parser = argparse.ArgumentParser(description="get shop list from specific location")
     # ------------------------>
     parser.add_argument(
         "--centerFile",
@@ -29,8 +27,7 @@ def parse_args():
     parser.add_argument("--debug", type=bool, default=False)
     parser.add_argument("--workerNumShop", type=int, default=1)
     parser.add_argument("--doSleep", type=bool, default=True)
-    parser.add_argument("--outputPath", type=str,
-                        default="../panda_data/shopLst/")
+    parser.add_argument("--outputPath", type=str, default="../panda_data/shopLst/")
     args, _ = parser.parse_known_args()
     return args
 
@@ -151,7 +148,17 @@ def get_near_shop(lat, lng, today):
             print(res.text)
             break
 
-        restaurants = res.json()["data"]["items"]
+        data = res.json()
+
+        # save to json file
+        if not os.path.exists(f"{args.outputPath}/shop_json"):
+            os.makedirs(f"{args.outputPath}/shop_json")
+        filepath = f'{args.outputPath}/shop_json/foodpandaShop_{lat}_{lng}-{offset}-{TODAY}.json'
+        if not os.path.exists(filepath):
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False)
+
+        restaurants = data["data"]["items"]
         if len(restaurants) == 0:
             retry += 1
             if retry == 5:
@@ -160,20 +167,12 @@ def get_near_shop(lat, lng, today):
         # go through all the restaurants
         offset += len(restaurants)
         for restaurant in restaurants:
-            # save to json file
-            # if not os.path.exists(f'{args.outputPath}/shop_json'):
-            #     os.makedirs(f'{args.outputPath}/shop_json')
-            # filepath = f'{args.outputPath}/shop_json/foodpandaShop_{restaurant.get("code", "")}.json'
-            # if not os.path.exists(filepath):
-            #     with open(filepath, 'w', encoding='utf-8') as f:
-            #         json.dump(restaurant, f, ensure_ascii=False)
 
             result["shopName"].append(restaurant.get("name", ""))
             result["shopCode"].append(restaurant.get("code", ""))
             result["budget"].append(restaurant.get("budget", 0))
             result["distance"].append(restaurant.get("distance", 0.0))
-            result["pandaOnly"].append(
-                restaurant.get("is_best_in_city", False))
+            result["pandaOnly"].append(restaurant.get("is_best_in_city", False))
             result["rateNum"].append(restaurant.get("review_number", 0))
             result["updateDate"].append(now.strftime("%Y-%m-%d %H:%M:%S"))
             result["city"].append(restaurant["city"].get("name", ""))
@@ -189,8 +188,7 @@ def get_near_shop(lat, lng, today):
                 restaurant.get("service_fee_percentage_amount", 0)
             )
 
-            categories = [cat["name"]
-                          for cat in restaurant.get("cuisines", None)]
+            categories = [cat["name"] for cat in restaurant.get("cuisines", None)]
             result["category"].append(categories)
 
             chain = (
@@ -201,12 +199,9 @@ def get_near_shop(lat, lng, today):
             result["chainCode"].append(chain)
 
             result["minFee"].append(restaurant.get("minimum_delivery_fee", 0))
-            result["minOrder"].append(
-                restaurant.get("minimum_order_amount", 0))
-            result["minDelTime"].append(
-                restaurant.get("minimum_delivery_time", 0))
-            result["minPickTime"].append(
-                restaurant.get("minimum_pickup_time", 0))
+            result["minOrder"].append(restaurant.get("minimum_order_amount", 0))
+            result["minDelTime"].append(restaurant.get("minimum_delivery_time", 0))
+            result["minPickTime"].append(restaurant.get("minimum_pickup_time", 0))
 
             result["tags"].append(
                 json.dumps(restaurant.get("tags", []), ensure_ascii=False)
