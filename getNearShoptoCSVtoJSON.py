@@ -154,7 +154,7 @@ def get_near_shop(lat, lng, today):
         if TODAY.endswith("10"):
             if not os.path.exists(f"{args.outputPath}/shop_json"):
                 os.makedirs(f"{args.outputPath}/shop_json")
-            filepath = f'{args.outputPath}/shop_json/foodpandaShop_{lat}_{lng}-{offset}-{TODAY}.json'
+            filepath = f"{args.outputPath}/shop_json/foodpandaShop_{lat}_{lng}-{offset}-{TODAY}.json"
             if not os.path.exists(filepath):
                 with open(filepath, "w", encoding="utf-8") as f:
                     json.dump(data, f, ensure_ascii=False)
@@ -168,7 +168,6 @@ def get_near_shop(lat, lng, today):
         # go through all the restaurants
         offset += len(restaurants)
         for restaurant in restaurants:
-
             result["shopName"].append(restaurant.get("name", ""))
             result["shopCode"].append(restaurant.get("code", ""))
             result["budget"].append(restaurant.get("budget", 0))
@@ -280,6 +279,12 @@ if __name__ == "__main__":
     # read central location information
     centerLst_most = pd.read_csv(
         f"./inputCentral/{args.centerFile}",
+    )
+    centerLst_most = pd.concat(
+        [
+            pd.read_csv("./inputCentral/tw_points.csv"),
+            pd.read_csv("./inputCentral/new_anchors_filtered.csv"),
+        ]
     )
 
     # get shop data around center point
