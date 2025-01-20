@@ -6,6 +6,7 @@ import random
 import sys
 import time
 from datetime import datetime
+import logging
 
 import pandas as pd
 import requests
@@ -14,6 +15,13 @@ from tqdm import tqdm
 availabes_df = pd.DataFrame({"lat": [], "lng": [], "available": [], "fetched": []})
 redo_locations = []
 TODAY = str(datetime.now().strftime("%Y-%m-%d"))
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename=f"{TODAY}.log",
+    encoding="utf-8",
+    format="%(asctime)s[%(levelname)s]%(message)s",
+    level=logging.INFO,
+)
 
 
 def parse_args():
@@ -94,13 +102,13 @@ def get_near_shop(lat, lng, today):
 
     try:
         res = requests.get(url=URL, params=query, headers=headers)
-    except Exception:
-        print(f"\n{lat}, {lng} not ok\n===")
+    except Exception as e:
+        logging.error(f"({lat},{lng}) not ok : {str(e)}")
         redo_locations.append((lat, lng))
         return
 
     if res.status_code != requests.codes.ok:
-        print(f"\n{lat}, {lng} not ok\n===")
+        logging.error(f"({lat},{lng}) not ok : {res.status_code}")
         redo_locations.append((lat, lng))
         return
     data = res.json()
@@ -135,17 +143,16 @@ def get_near_shop(lat, lng, today):
         }
         try:
             res = requests.get(url=URL, params=query, headers=headers)
-        except Exception:
-            print(f"\n{lat}, {lng} not ok\n===")
+        except Exception as e:
+            logging.error(f"({lat},{lng}) not ok : {str(e)}")
             redo_locations.append((lat, lng))
             return
 
         time.sleep(4 + random.random())
 
         if res.status_code != requests.codes.ok:
+            logging.error(f"({lat},{lng}) not ok : {res.status_code} {res.text}")
             redo_locations.append((lat, lng))
-            print("fail to request")
-            print(res.text)
             break
 
         data = res.json()
@@ -215,13 +222,13 @@ def get_near_shop(lat, lng, today):
             "fetched": df.shape[0],
         }
     except Exception as e:
-        print(e)
+        logging.error(f"({lat},{lng}) not ok : {str(e)}")
 
     # output path, change this if needed
     # creat date folder under shoplist if it is not exsist
     if not os.path.exists(f"{args.outputPath}/{today}"):
         os.makedirs(f"{args.outputPath}/{today}")
-    print(f"({lat}, {lng}) available: {df.shape[0]}/{datalen}\n===")
+    logging.info(f"({lat}, {lng}) available: {df.shape[0]}/{datalen}")
     df.to_csv(f"{args.outputPath}/{today}/shopLst_{lng}_{lat}_{today}.csv")
 
 
@@ -257,7 +264,7 @@ def concat_df(TODAY):
     except Exception:
         pass
     df.to_csv(f"{args.outputPath}/rolling.csv")
-    print(f"write {args.outputPath}/{TODAY}/all_most_{TODAY}.csv")
+    logging.info(f"write {args.outputPath}/{TODAY}/all_most_{TODAY}.csv")
     return df
 
 
@@ -266,9 +273,9 @@ if __name__ == "__main__":
     available_counts = {}
 
     # get current date
-    print(TODAY)
+    logging.info(TODAY)
 
-    print(f"DEBUG_MODE={args.debug}")
+    logging.info(f"DEBUG_MODE={args.debug}")
     if args.debug:
         get_near_shop(lat=24.98763, lng=121.57615, today=TODAY)
         shopData = concat_df(TODAY)
@@ -277,7 +284,7 @@ if __name__ == "__main__":
             f"{args.outputPath}/{TODAY}/availableCounts.csv"
         )
 
-        print("number of resuarant in total: ", len(shopData))
+        logging.info(f"number of resuarant in total: {len(shopData)}")
         availabes_df.to_csv(f"{args.outputPath}/{TODAY}/available_counts.csv")
         sys.exit()
 
@@ -307,12 +314,12 @@ if __name__ == "__main__":
             )
         )
 
-    print(f"Length of Redos: {len(redo_locations)}")
+    logging.info(f"Length of Redos: {len(redo_locations)}")
     if len(redo_locations) > 0:
         for location in redo_locations:
-            print(f"Redo... {location}")
+            logging.info(f"Redo... {location}")
             get_near_shop(location[0], location[1], TODAY)
-    print("shop catch down")
+    logging.info("shop catch down")
     # concat all the restuarant list, output:
     shopData = concat_df(TODAY)
 
@@ -320,5 +327,5 @@ if __name__ == "__main__":
         f"{args.outputPath}/{TODAY}/availableCounts.csv"
     )
 
-    print("number of resuarant in total: ", len(shopData))
+    logging.info("number of resuarant in total: ", len(shopData))
     availabes_df.to_csv(f"{args.outputPath}/{TODAY}/available_counts.csv")
