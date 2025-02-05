@@ -199,7 +199,7 @@ def get_near_shop(lat, lng, today):
             result["category"].append(categories)
 
             chain = (
-                restaurant["chain"].get("main_vendor_code", "")
+                restaurant["chain"].get("code", "")
                 if restaurant.get("chain")
                 else ""
             )
