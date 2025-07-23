@@ -62,8 +62,8 @@ def get_near_shop(lat, lng, today):
         "minDelTime": [],
         "minPickTime": [],
         "distance": [],
-        "rating": [],
-        "reviewNumber": [],
+        "rate": [],
+        "rateCt": [],
         "address": [],
         "chainCode": [],
         "city": [],
@@ -181,8 +181,8 @@ def get_near_shop(lat, lng, today):
             result["budget"].append(restaurant.get("budget", 0))
             result["distance"].append(restaurant.get("distance", 0.0))
             result["pandaOnly"].append(restaurant.get("is_best_in_city", False))
-            result["reviewNumber"].append(restaurant.get("review_number", 0))
-            result["rating"].append(restaurant.get("rating", 0))
+            result["rate"].append(restaurant.get("rating", 0))
+            result["rateCt"].append(restaurant.get("review_number", 0))
             result["updateDate"].append(now.strftime("%Y-%m-%d %H:%M:%S"))
             result["city"].append(restaurant["city"].get("name", ""))
             result["address"].append(restaurant.get("address", ""))
